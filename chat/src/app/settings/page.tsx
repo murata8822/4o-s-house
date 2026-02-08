@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { MODELS } from '@/types';
 import type { Settings } from '@/types';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const supabase = createClient();
+  // supabase is imported as singleton from @/lib/supabase/client
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [displayName, setDisplayName] = useState('');
