@@ -53,8 +53,7 @@ export default function AuthContent() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // ★ Step2: ここを /auth にする
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 
@@ -73,8 +72,7 @@ export default function AuthContent() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // ★ Step2: ここも /auth にする
-        emailRedirectTo: `${window.location.origin}/auth`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 
