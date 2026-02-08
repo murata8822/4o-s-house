@@ -19,22 +19,46 @@ export default function AuthContent() {
       setMessage('このメールアドレスはアクセスが許可されていません。');
     } else if (error === 'auth_failed') {
       setMessage('認証に失敗しました。もう一度お試しください。');
-    } else {
-      // 余計なエラーが残ってたら消す
-      // setMessage('');
     }
   }, [searchParams]);
 
-  // すでにログイン済みならトップへ
+  // ハッシュフラグメントからトークンを取得してセッション確立
   useEffect(() => {
-    // Listen for auth state changes (handles implicit flow with #access_token)
+    const handleAuthFromHash = async () => {
+      const hash = window.location.hash;
+      if (!hash || !hash.includes('access_token')) return;
+
+      // #access_token=xxx&refresh_token=yyy&... をパース
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!error) {
+          // ハッシュをURLから消してトップへ
+          window.location.replace('/');
+          return;
+        }
+      }
+    };
+
+    handleAuthFromHash();
+  }, []);
+
+  // onAuthStateChange でログイン検知（フォールバック）
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         router.push('/');
       }
     });
 
-    // Also check if already signed in
+    // すでにログイン済みならトップへ
     const checkSession = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (!error && user) router.push('/');
@@ -53,7 +77,7 @@ export default function AuthContent() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: `${window.location.origin}/auth`,
       },
     });
 
@@ -72,7 +96,7 @@ export default function AuthContent() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth`,
       },
     });
 
