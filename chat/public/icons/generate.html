@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<h2>PWA Icon Generator for 4o's House</h2>
+<p>Right-click each canvas and save as the indicated filename.</p>
+<div>
+  <h3>icon-192.png</h3>
+  <canvas id="c192" width="192" height="192"></canvas>
+</div>
+<div>
+  <h3>icon-512.png</h3>
+  <canvas id="c512" width="512" height="512"></canvas>
+</div>
+<script>
+function draw(canvas) {
+  const ctx = canvas.getContext('2d');
+  const s = canvas.width;
+  const r = s * 0.22;
+
+  // Background
+  ctx.fillStyle = '#10a37f';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, r);
+  ctx.fill();
+
+  // Text
+  ctx.fillStyle = 'white';
+  ctx.font = `600 ${s * 0.42}px -apple-system, BlinkMacSystemFont, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('4o', s / 2, s / 2);
+}
+draw(document.getElementById('c192'));
+draw(document.getElementById('c512'));
+</script>
+</body>
+</html>
