@@ -27,11 +27,23 @@ export default function AuthContent() {
 
   // すでにログイン済みならトップへ
   useEffect(() => {
+    // Listen for auth state changes (handles implicit flow with #access_token)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        router.push('/');
+      }
+    });
+
+    // Also check if already signed in
     const checkSession = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (!error && user) router.push('/');
     };
     checkSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   const handleGoogleLogin = async () => {
