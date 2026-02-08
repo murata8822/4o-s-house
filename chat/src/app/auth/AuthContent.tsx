@@ -12,43 +12,50 @@ export default function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // URLの ?error= を表示
+  // ?code= (PKCE) または #access_token= (implicit) を処理してセッション確立
   useEffect(() => {
-    const error = searchParams.get('error');
-    if (error === 'not_allowed') {
-      setMessage('このメールアドレスはアクセスが許可されていません。');
-    } else if (error === 'auth_failed') {
-      setMessage('認証に失敗しました。もう一度お試しください。');
-    }
-  }, [searchParams]);
-
-  // ハッシュフラグメントからトークンを取得してセッション確立
-  useEffect(() => {
-    const handleAuthFromHash = async () => {
-      const hash = window.location.hash;
-      if (!hash || !hash.includes('access_token')) return;
-
-      // #access_token=xxx&refresh_token=yyy&... をパース
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-
-      if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
+    const handleAuth = async () => {
+      // PKCE flow: ?code= をコード交換
+      const code = searchParams.get('code');
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
-          // ハッシュをURLから消してトップへ
           window.location.replace('/');
           return;
         }
+        setMessage('認証に失敗しました。もう一度お試しください。');
+        return;
+      }
+
+      // Implicit flow: #access_token= をセッションに設定
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!error) {
+            window.location.replace('/');
+            return;
+          }
+        }
+      }
+
+      // ?error= を表示
+      const error = searchParams.get('error');
+      if (error === 'not_allowed') {
+        setMessage('このメールアドレスはアクセスが許可されていません。');
+      } else if (error === 'auth_failed') {
+        setMessage('認証に失敗しました。もう一度お試しください。');
       }
     };
 
-    handleAuthFromHash();
-  }, []);
+    handleAuth();
+  }, [searchParams]);
 
   // onAuthStateChange でログイン検知（フォールバック）
   useEffect(() => {
