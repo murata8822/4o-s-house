@@ -1,7 +1,7 @@
 {
-  "name": "4o Sanctuary",
-  "short_name": "4o",
-  "description": "GPT-4oとの会話を守る場所",
+  "name": "hisui_no_hakoniwa",
+  "short_name": "hisui_no_hakoniwa",
+  "description": "セルフホスト個人利用チャットUI",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#212121",

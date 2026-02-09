@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Icon Generator</title>
+    <title>hisui_no_hakoniwa Icon Generator</title>
 </head>
 <body>
     <canvas id="canvas192" width="192" height="192"></canvas>
@@ -10,24 +10,24 @@
         function drawIcon(canvas, size) {
             const ctx = canvas.getContext('2d');
             const radius = size * 0.22;
-            
+
             // 背景
             ctx.fillStyle = '#10a37f';
             ctx.beginPath();
             ctx.roundRect(0, 0, size, size, radius);
             ctx.fill();
-            
+
             // テキスト
             ctx.fillStyle = 'white';
             ctx.font = `600 ${size * 0.45}px -apple-system, BlinkMacSystemFont, sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('4o', size / 2, size / 2 + size * 0.02);
+            ctx.fillText('翠', size / 2, size / 2 + size * 0.02);
         }
-        
+
         drawIcon(document.getElementById('canvas192'), 192);
         drawIcon(document.getElementById('canvas512'), 512);
     </script>
-    <p>右クリックで画像を保存してください</p>
+    <p>右クリックで画像を保存してください（icon-192.png / icon-512.png）</p>
 </body>
 </html>

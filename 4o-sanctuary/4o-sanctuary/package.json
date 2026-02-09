@@ -1,0 +1,9 @@
+{
+  "name": "hisui-no-hakoniwa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "セルフホスト個人利用チャットUI — GPT-4oとの対話を自分のインフラで守る",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
