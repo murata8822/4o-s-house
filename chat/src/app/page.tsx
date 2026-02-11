@@ -20,6 +20,7 @@ export default function Home() {
   const { settings } = useSettings();
   const {
     conversations,
+    loading: conversationsLoading,
     fetchConversations,
     createConversation,
     deleteConversation,
@@ -200,6 +201,7 @@ export default function Home() {
         conversations={conversations}
         currentId={currentConvId}
         isOpen={sidebarOpen}
+        isLoading={conversationsLoading}
         onClose={() => setSidebarOpen(false)}
         onSelect={handleSelectConversation}
         onNewChat={handleNewChat}
