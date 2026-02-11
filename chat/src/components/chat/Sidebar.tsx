@@ -48,7 +48,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed md:relative left-0 top-0 bottom-0 w-[280px] bg-[#171717] border-r border-[#424242] flex flex-col z-50 transition-transform duration-300 ${
+        className={`fixed md:relative left-0 top-0 bottom-0 w-[300px] bg-[#171717] border-r border-[#424242] flex flex-col z-50 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -59,7 +59,7 @@ export default function Sidebar({
               onNewChat();
               onClose();
             }}
-            className="w-full py-3 px-4 bg-transparent border border-[#424242] rounded-xl text-[#ececec] text-sm flex items-center gap-2 hover:bg-[#2f2f2f] active:scale-[0.98] transition-all"
+            className="w-full py-3.5 px-4 bg-transparent border border-[#424242] rounded-xl text-[#ececec] text-base font-medium leading-6 flex items-center gap-2 hover:bg-[#2f2f2f] active:scale-[0.98] transition-all"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19" />
@@ -76,7 +76,7 @@ export default function Sidebar({
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="チャットを検索..."
-            className="w-full bg-[#2f2f2f] border border-[#424242] rounded-lg py-2 px-3 text-sm text-[#ececec] placeholder-[#9b9b9b] outline-none focus:border-[#10a37f] transition-colors"
+            className="w-full bg-[#2f2f2f] border border-[#424242] rounded-lg py-2.5 px-3 text-base leading-6 text-[#ececec] placeholder-[#9b9b9b] outline-none focus:border-[#10a37f] transition-colors"
           />
         </div>
 
@@ -94,7 +94,7 @@ export default function Sidebar({
                 onSelect(conv.id);
                 onClose();
               }}
-              className={`group relative flex items-center gap-2 py-2.5 px-3 rounded-lg cursor-pointer mb-0.5 transition-colors ${
+              className={`group relative flex items-center gap-2 py-3 px-3.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
                 conv.id === currentId
                   ? 'bg-[#2f2f2f] text-[#ececec]'
                   : 'text-[#9b9b9b] hover:bg-[#2f2f2f]/50'
@@ -108,8 +108,8 @@ export default function Sidebar({
                 </span>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-sm truncate">{conv.title}</div>
-                <div className="text-xs text-[#6b6b6b] mt-0.5">
+                <div className="text-base leading-6 truncate">{conv.title}</div>
+                <div className="text-sm leading-5 text-[#6b6b6b] mt-0.5">
                   {formatRelativeTime(conv.updated_at)}
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function Sidebar({
         <div className="border-t border-[#424242] p-3 space-y-1">
           <button
             onClick={() => { onNavigate('/settings'); onClose(); }}
-            className="w-full py-2 px-3 text-left text-sm text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
+            className="w-full py-2.5 px-3 text-left text-base leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3" />
@@ -168,7 +168,7 @@ export default function Sidebar({
           </button>
           <button
             onClick={() => { onNavigate('/usage'); onClose(); }}
-            className="w-full py-2 px-3 text-left text-sm text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
+            className="w-full py-2.5 px-3 text-left text-base leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 20V10" /><path d="M18 20V4" /><path d="M6 20v-4" />
@@ -177,7 +177,7 @@ export default function Sidebar({
           </button>
           <button
             onClick={() => { onNavigate('/export'); onClose(); }}
-            className="w-full py-2 px-3 text-left text-sm text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
+            className="w-full py-2.5 px-3 text-left text-base leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
