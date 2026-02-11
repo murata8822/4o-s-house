@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { readShowMessageModel, writeShowMessageModel } from '@/lib/preferences';
 import { MODELS } from '@/types';
 import type { Settings } from '@/types';
 
@@ -15,6 +16,7 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState('');
   const [memory, setMemory] = useState('');
   const [memorySizeKB, setMemorySizeKB] = useState(0);
+  const [showMessageModel, setShowMessageModel] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -33,6 +35,8 @@ export default function SettingsPage() {
         setMemory(data.markdown || '');
         setMemorySizeKB(new TextEncoder().encode(data.markdown || '').length / 1024);
       });
+
+    setShowMessageModel(readShowMessageModel());
   }, []);
 
   const handleSave = async () => {
@@ -226,6 +230,15 @@ export default function SettingsPage() {
               description="送信/受信時の効果音"
               value={settings.sound_enabled}
               onChange={(v) => setSettings({ ...settings, sound_enabled: v })}
+            />
+            <ToggleRow
+              label="モデル名表示"
+              description="各アシスタント返信にモデル名を表示"
+              value={showMessageModel}
+              onChange={(v) => {
+                setShowMessageModel(v);
+                writeShowMessageModel(v);
+              }}
             />
           </div>
         </section>
