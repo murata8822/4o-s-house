@@ -36,6 +36,12 @@ export default function Home() {
     }
   }, [settings]);
 
+  // Default sidebar state: open on desktop, closed on mobile.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setSidebarOpen(window.matchMedia('(min-width: 768px)').matches);
+  }, []);
+
   // Load memory
   useEffect(() => {
     fetch('/api/memory')

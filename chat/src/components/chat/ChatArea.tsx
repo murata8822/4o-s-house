@@ -104,7 +104,8 @@ export default function ChatArea({
       <header className="flex items-center gap-3 px-5 py-3.5 border-b border-[#424242]">
         <button
           onClick={onToggleSidebar}
-          className="md:hidden text-[#ececec] p-2 rounded-lg active:scale-95 transition-transform hover:bg-[#2f2f2f]"
+          className="text-[#ececec] p-2 rounded-lg active:scale-95 transition-transform hover:bg-[#2f2f2f]"
+          aria-label="Toggle sidebar"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="3" y1="6" x2="21" y2="6" />
@@ -115,7 +116,7 @@ export default function ChatArea({
 
         <button
           onClick={() => setShowModelPicker(!showModelPicker)}
-          className="bg-[#10a37f] text-white px-4 py-1.5 rounded-full text-sm font-medium leading-5 hover:bg-[#1a7f64] active:scale-95 transition-all"
+          className="bg-[#10a37f] text-white min-w-[190px] sm:min-w-[240px] max-w-[60vw] sm:max-w-none px-4 py-1.5 rounded-full text-sm font-medium leading-5 hover:bg-[#1a7f64] active:scale-95 transition-all text-left truncate"
         >
           {modelLabel}
         </button>
@@ -130,7 +131,7 @@ export default function ChatArea({
         )}
 
         {conversationTitle && (
-          <div className="flex-1 text-base leading-6 text-[#9b9b9b] truncate text-right">
+          <div className="hidden md:block flex-1 text-base leading-6 text-[#9b9b9b] truncate text-right">
             {conversationTitle}
           </div>
         )}
@@ -149,7 +150,7 @@ export default function ChatArea({
       )}
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-7">
+      <div className="flex-1 overflow-y-auto px-5 md:px-6 py-7">
         {!hasMessages && (
           <div className="h-full flex flex-col items-center justify-center text-[#9b9b9b]">
             <div className="w-16 h-16 bg-[#10a37f] rounded-2xl flex items-center justify-center text-white text-2xl font-semibold mb-4">
@@ -160,7 +161,7 @@ export default function ChatArea({
           </div>
         )}
 
-        <div className="max-w-4xl mx-auto space-y-7">
+        <div className="max-w-5xl mx-auto space-y-7">
           {messages.map((msg) => (
             <MessageBubble
               key={msg.id}
@@ -193,8 +194,8 @@ export default function ChatArea({
       </div>
 
       {/* Input Area */}
-      <div className="input-area px-5 pb-4 pt-2.5 bg-[#212121]">
-        <div className="max-w-4xl mx-auto">
+      <div className="input-area px-5 md:px-6 pb-4 pt-2.5 bg-[#212121]">
+        <div className="max-w-5xl mx-auto">
           {/* Image Preview */}
           {imagePreview && (
             <div className="mb-2 relative inline-block">
