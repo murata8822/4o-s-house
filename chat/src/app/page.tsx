@@ -143,12 +143,15 @@ export default function Home() {
         },
         // onDone
         () => {
-          setStreamingText('');
-          // Re-fetch messages from DB
+          // Re-fetch messages from DB, then clear streaming text to avoid UI flicker.
           fetch(`/api/conversations/${convId}`)
             .then((r) => r.json())
             .then((data) => {
               setMessages(data.messages || []);
+              setStreamingText('');
+            })
+            .catch(() => {
+              setStreamingText('');
             });
           fetchConversations();
         },
