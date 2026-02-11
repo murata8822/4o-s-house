@@ -84,11 +84,14 @@ export default function Home() {
       }
 
       // Save user message
-      const userMsg = await addMessage({
-        content_text: text,
-        role: 'user',
-        content_json: imageData ? { imageData } : null,
-      });
+      const userMsg = await addMessage(
+        {
+          content_text: text,
+          role: 'user',
+          content_json: imageData ? { imageData } : null,
+        },
+        convId
+      );
 
       if (!userMsg) return;
 
