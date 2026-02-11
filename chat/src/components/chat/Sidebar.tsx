@@ -71,10 +71,30 @@ export default function Sidebar({
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     onSearch(query);
+  };
+
+  const startRename = (conv: Conversation) => {
+    setRenamingId(conv.id);
+    setRenameDraft(conv.title);
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameDraft('');
+  };
+
+  const submitRename = (conv: Conversation) => {
+    const next = renameDraft.trim();
+    if (next && next !== conv.title) {
+      onRename(conv.id, next);
+    }
+    cancelRename();
   };
 
   return (
@@ -183,10 +203,12 @@ export default function Sidebar({
 
           {conversations.map((conv) => {
             const active = conv.id === currentId;
+            const isRenaming = renamingId === conv.id;
             return (
               <div
                 key={conv.id}
                 onClick={() => {
+                  if (isRenaming) return;
                   onSelect(conv.id);
                   if (window.matchMedia('(max-width: 767px)').matches) onClose();
                 }}
@@ -207,10 +229,53 @@ export default function Sidebar({
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <div className="text-[16px] leading-6 truncate">{conv.title}</div>
-                  <div className="text-[14px] leading-5 text-[var(--text-muted)] mt-0.5">
-                    {formatRelativeTime(conv.updated_at)}
-                  </div>
+                  {isRenaming ? (
+                    <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        autoFocus
+                        value={renameDraft}
+                        onChange={(e) => setRenameDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            submitRename(conv);
+                          }
+                          if (e.key === 'Escape') {
+                            e.preventDefault();
+                            cancelRename();
+                          }
+                        }}
+                        className="w-full h-9 px-3 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            submitRename(conv);
+                          }}
+                          className="px-2.5 py-1 text-xs rounded-md bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text-primary)]"
+                        >
+                          保存
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelRename();
+                          }}
+                          className="px-2.5 py-1 text-xs rounded-md border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                        >
+                          {TEXT.cancel}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-[16px] leading-6 truncate">{conv.title}</div>
+                      <div className="text-[14px] leading-5 text-[var(--text-muted)] mt-0.5">
+                        {formatRelativeTime(conv.updated_at)}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
@@ -240,10 +305,11 @@ export default function Sidebar({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const next = window.prompt(TEXT.rename, conv.title)?.trim();
-                      if (next && next !== conv.title) {
-                        onRename(conv.id, next);
+                      if (isRenaming) {
+                        cancelRename();
+                        return;
                       }
+                      startRename(conv);
                     }}
                     className="w-7 h-7 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
                     title={TEXT.rename}
