@@ -12,26 +12,69 @@ export default function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // URLの ?error= を表示
+  // ?code= (PKCE) または #access_token= (implicit) を処理してセッション確立
   useEffect(() => {
-    const error = searchParams.get('error');
-    if (error === 'not_allowed') {
-      setMessage('このメールアドレスはアクセスが許可されていません。');
-    } else if (error === 'auth_failed') {
-      setMessage('認証に失敗しました。もう一度お試しください。');
-    } else {
-      // 余計なエラーが残ってたら消す
-      // setMessage('');
-    }
+    const handleAuth = async () => {
+      // PKCE flow: ?code= をコード交換
+      const code = searchParams.get('code');
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!error) {
+          window.location.replace('/');
+          return;
+        }
+        setMessage('認証に失敗しました。もう一度お試しください。');
+        return;
+      }
+
+      // Implicit flow: #access_token= をセッションに設定
+      const hash = window.location.hash;
+      if (hash && hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!error) {
+            window.location.replace('/');
+            return;
+          }
+        }
+      }
+
+      // ?error= を表示
+      const error = searchParams.get('error');
+      if (error === 'not_allowed') {
+        setMessage('このメールアドレスはアクセスが許可されていません。');
+      } else if (error === 'auth_failed') {
+        setMessage('認証に失敗しました。もう一度お試しください。');
+      }
+    };
+
+    handleAuth();
   }, [searchParams]);
 
-  // すでにログイン済みならトップへ
+  // onAuthStateChange でログイン検知（フォールバック）
   useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        router.push('/');
+      }
+    });
+
+    // すでにログイン済みならトップへ
     const checkSession = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (!error && user) router.push('/');
     };
     checkSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   const handleGoogleLogin = async () => {
@@ -41,7 +84,6 @@ export default function AuthContent() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // ★ Step2: ここを /auth にする
         redirectTo: `${window.location.origin}/auth`,
       },
     });
@@ -61,7 +103,6 @@ export default function AuthContent() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // ★ Step2: ここも /auth にする
         emailRedirectTo: `${window.location.origin}/auth`,
       },
     });
