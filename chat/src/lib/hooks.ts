@@ -107,14 +107,18 @@ export function useMessages(conversationId: string | null) {
       .catch(() => setLoading(false));
   }, [conversationId]);
 
-  const addMessage = async (msg: {
-    content_text: string;
-    role: string;
-    content_json?: Record<string, unknown> | null;
-    model?: string;
-  }) => {
-    if (!conversationId) return null;
-    const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+  const addMessage = async (
+    msg: {
+      content_text: string;
+      role: string;
+      content_json?: Record<string, unknown> | null;
+      model?: string;
+    },
+    targetConversationId?: string
+  ) => {
+    const effectiveConversationId = targetConversationId ?? conversationId;
+    if (!effectiveConversationId) return null;
+    const res = await fetch(`/api/conversations/${effectiveConversationId}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(msg),
