@@ -57,7 +57,7 @@ export default function Sidebar({
         }`}
       >
         {/* New Chat Button */}
-        <div className="p-4">
+        <div className="pt-4 pb-3 pl-5 pr-4">
           <button
             onClick={() => {
               onNewChat();
@@ -76,7 +76,7 @@ export default function Sidebar({
         </div>
 
         {/* Search */}
-        <div className="px-4 pb-3">
+        <div className="pl-5 pr-4 pb-3">
           <input
             type="text"
             value={searchQuery}
@@ -87,7 +87,7 @@ export default function Sidebar({
         </div>
 
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto px-3 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto pl-4 pr-3 scrollbar-thin">
           {isLoading && (
             <div className="flex items-center justify-center py-8 text-[#9b9b9b]">
               <span className="inline-block w-5 h-5 border-2 border-[#424242] border-t-[#10a37f] rounded-full animate-spin" />
@@ -108,7 +108,7 @@ export default function Sidebar({
                   onClose();
                 }
               }}
-              className={`group relative flex items-center gap-2 py-3 px-3.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
+              className={`group relative flex items-center gap-2 py-3.5 px-4 rounded-lg cursor-pointer mb-0.5 transition-colors ${
                 conv.id === currentId
                   ? 'bg-[#2f2f2f] text-[#ececec]'
                   : 'text-[#9b9b9b] hover:bg-[#2f2f2f]/50'
@@ -169,7 +169,7 @@ export default function Sidebar({
         </div>
 
         {/* Footer Navigation */}
-        <div className="border-t border-[#424242] p-4 space-y-2">
+        <div className="border-t border-[#424242] pl-5 pr-4 py-4 space-y-2.5">
           <button
             onClick={() => {
               onNavigate('/settings');
@@ -177,7 +177,7 @@ export default function Sidebar({
                 onClose();
               }
             }}
-            className="w-full py-3.5 px-3.5 text-left text-[17px] leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
+            className="w-full py-4 px-4 text-left text-[17px] leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3" />
@@ -192,7 +192,7 @@ export default function Sidebar({
                 onClose();
               }
             }}
-            className="w-full py-3.5 px-3.5 text-left text-[17px] leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
+            className="w-full py-4 px-4 text-left text-[17px] leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 20V10" /><path d="M18 20V4" /><path d="M6 20v-4" />
@@ -206,7 +206,7 @@ export default function Sidebar({
                 onClose();
               }
             }}
-            className="w-full py-3.5 px-3.5 text-left text-[17px] leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
+            className="w-full py-4 px-4 text-left text-[17px] leading-6 text-[#9b9b9b] rounded-lg hover:bg-[#2f2f2f] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

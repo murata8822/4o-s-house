@@ -101,7 +101,7 @@ export default function ChatArea({
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[#212121]">
       {/* Header */}
-      <header className="flex items-center gap-3 px-5 py-3.5 border-b border-[#424242]">
+      <header className="flex items-center gap-3 px-6 md:px-7 py-3.5 border-b border-[#424242]">
         <button
           onClick={onToggleSidebar}
           className="text-[#ececec] p-2 rounded-lg active:scale-95 transition-transform hover:bg-[#2f2f2f]"
@@ -150,7 +150,7 @@ export default function ChatArea({
       )}
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-5 md:px-6 py-7">
+      <div className="flex-1 overflow-y-auto px-6 md:px-7 py-7">
         {!hasMessages && (
           <div className="h-full flex flex-col items-center justify-center text-[#9b9b9b]">
             <div className="w-16 h-16 bg-[#10a37f] rounded-2xl flex items-center justify-center text-white text-2xl font-semibold mb-4">
@@ -194,7 +194,7 @@ export default function ChatArea({
       </div>
 
       {/* Input Area */}
-      <div className="input-area px-5 md:px-6 pb-4 pt-2.5 bg-[#212121]">
+      <div className="input-area px-6 md:px-7 pb-4 pt-2.5 bg-[#212121]">
         <div className="max-w-5xl mx-auto">
           {/* Image Preview */}
           {imagePreview && (
@@ -243,7 +243,7 @@ export default function ChatArea({
               onKeyDown={handleKeyDown}
               placeholder="メッセージを入力..."
               rows={1}
-              className="w-full bg-[#2f2f2f] border border-[#424242] rounded-2xl py-4 pl-5 pr-28 text-base leading-7 text-[#ececec] placeholder-[#9b9b9b] outline-none focus:border-[#10a37f] resize-none min-h-[58px] max-h-[220px] transition-colors"
+              className="w-full bg-[#2f2f2f] border border-[#424242] rounded-2xl py-4 pl-6 pr-28 text-base leading-7 text-[#ececec] placeholder-[#9b9b9b] outline-none focus:border-[#10a37f] resize-none min-h-[58px] max-h-[220px] transition-colors"
             />
             <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
               {/* Image attach button */}
