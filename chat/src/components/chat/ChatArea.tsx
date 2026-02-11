@@ -36,7 +36,13 @@ const TEXT = {
   attachFromLibrary: '\u5199\u771f\u30e9\u30a4\u30d6\u30e9\u30ea',
   attachFromCamera: '\u30ab\u30e1\u30e9',
   voiceInput: '\u97f3\u58f0\u5165\u529b',
+  composerSmaller: '\u5165\u529b\u6b04\u3092\u7e2e\u5c0f',
+  composerLarger: '\u5165\u529b\u6b04\u3092\u62e1\u5927',
 };
+
+const COMPOSER_MIN_HEIGHT = 84;
+const COMPOSER_MAX_HEIGHT = 300;
+const COMPOSER_STEP = 36;
 
 export default function ChatArea({
   messages,
@@ -59,8 +65,8 @@ export default function ChatArea({
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [composerHeight, setComposerHeight] = useState(108);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const speechRef = useRef<{ stop: () => void } | null>(null);
@@ -73,18 +79,19 @@ export default function ChatArea({
       minute: '2-digit',
     });
 
-  useEffect(() => {
-    // Avoid forced scrolling while assistant text is streaming.
-    if (isStreaming) return;
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming]);
+  // Intentionally no auto-scroll to avoid motion; user controls scroll position.
 
   useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = 'auto';
-    ta.style.height = `${Math.min(ta.scrollHeight, 220)}px`;
-  }, [inputText]);
+    const raw = window.localStorage.getItem('chat.composer.height');
+    if (!raw) return;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return;
+    setComposerHeight(Math.max(COMPOSER_MIN_HEIGHT, Math.min(COMPOSER_MAX_HEIGHT, parsed)));
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem('chat.composer.height', String(composerHeight));
+  }, [composerHeight]);
 
   const handleSend = () => {
     const text = inputText.trim();
@@ -94,7 +101,6 @@ export default function ChatArea({
     onSend(text, imagePreview || undefined);
     setInputText('');
     setImagePreview(null);
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -196,9 +202,13 @@ export default function ChatArea({
 
   const modelLabel = MODELS.find((m) => m.id === currentModel)?.label || currentModel;
   const hasMessages = messages.length > 0 || Boolean(streamingText);
+  const decreaseComposer = () =>
+    setComposerHeight((prev) => Math.max(COMPOSER_MIN_HEIGHT, prev - COMPOSER_STEP));
+  const increaseComposer = () =>
+    setComposerHeight((prev) => Math.min(COMPOSER_MAX_HEIGHT, prev + COMPOSER_STEP));
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-[var(--bg)] text-[var(--text-primary)]">
+    <div className="relative flex-1 flex flex-col min-w-0 bg-[var(--bg)] text-[var(--text-primary)]">
       <header className="flex items-center gap-3 px-8 md:px-10 py-4 border-b border-[var(--border)]">
         <button
           onClick={onToggleSidebar}
@@ -253,7 +263,7 @@ export default function ChatArea({
         />
       )}
 
-      <div className="flex-1 overflow-y-auto px-8 md:px-10 py-7">
+      <div className="flex-1 overflow-y-auto px-8 md:px-10 pt-7 pb-44">
         {!hasMessages && (
           <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] -translate-y-[-10px]">
             <div className="w-16 h-16 bg-[var(--accent)] rounded-2xl flex items-center justify-center text-white text-2xl font-semibold mb-4">
@@ -281,7 +291,7 @@ export default function ChatArea({
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-base font-medium text-[var(--accent)]">4o</span>
               </div>
-              <div className="text-base leading-8 text-[var(--text-primary)] whitespace-pre-wrap">
+              <div className="text-base leading-5 text-[var(--text-primary)] whitespace-pre-wrap">
                 {streamingText || (
                   <div className="flex gap-1 py-2">
                     <span className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce [animation-delay:-0.32s]" />
@@ -294,12 +304,34 @@ export default function ChatArea({
             </div>
           )}
 
-          <div ref={chatEndRef} />
         </div>
       </div>
 
-      <div className="input-area px-8 md:px-10 pb-4 pt-2.5 bg-[var(--bg)]">
-        <div className="max-w-5xl mx-auto">
+      <div className="input-area absolute inset-x-0 bottom-0 px-8 md:px-10 pb-4 pt-4 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/95 to-transparent pointer-events-none">
+        <div className="max-w-5xl mx-auto pointer-events-auto">
+          <div className="mb-2 flex justify-end gap-1.5">
+            <button
+              onClick={decreaseComposer}
+              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+              title={TEXT.composerSmaller}
+              aria-label={TEXT.composerSmaller}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <button
+              onClick={increaseComposer}
+              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+              title={TEXT.composerLarger}
+              aria-label={TEXT.composerLarger}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
           {imagePreview && (
             <div className="mb-2 relative inline-block">
               <img src={imagePreview} alt="Preview" className="h-20 rounded-lg border border-[var(--border)]" />
@@ -365,7 +397,8 @@ export default function ChatArea({
               onKeyDown={handleKeyDown}
               placeholder={TEXT.inputPlaceholder}
               rows={1}
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl py-4 pl-14 pr-32 text-base leading-7 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] resize-none min-h-[58px] max-h-[220px] transition-colors"
+              style={{ height: `${composerHeight}px` }}
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl pt-4 pb-14 pl-14 pr-32 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] resize-none transition-colors"
             />
 
             <div className="absolute left-2.5 bottom-2.5">
