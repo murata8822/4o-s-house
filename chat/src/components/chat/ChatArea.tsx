@@ -65,8 +65,10 @@ export default function ChatArea({
     });
 
   useEffect(() => {
+    // Avoid forced scrolling while assistant text is streaming.
+    if (isStreaming) return;
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingText]);
+  }, [messages, isStreaming]);
 
   useEffect(() => {
     const ta = textareaRef.current;
@@ -87,7 +89,15 @@ export default function ChatArea({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key !== 'Enter') return;
+    if (e.nativeEvent.isComposing) return;
+
+    // Keep newline behavior on mobile keyboards (coarse pointer).
+    const isCoarsePointer =
+      typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+    const isShortcutSend = e.ctrlKey || e.metaKey;
+
+    if (isShortcutSend || (!isCoarsePointer && !e.shiftKey)) {
       e.preventDefault();
       handleSend();
     }
