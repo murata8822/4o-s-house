@@ -228,6 +228,7 @@ export default function Home() {
             setCurrentConvId(null);
           }
         }}
+        onRename={(id, title) => updateConversation(id, { title } as Partial<Conversation>)}
         onPin={(id, pinned) => updateConversation(id, { pinned } as Partial<Conversation>)}
         onSearch={(q) => fetchConversations(q)}
         onNavigate={(path) => router.push(path)}

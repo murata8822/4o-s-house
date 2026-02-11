@@ -16,6 +16,7 @@ interface SidebarProps {
   onSelect: (id: string) => void;
   onNewChat: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => void;
   onPin: (id: string, pinned: boolean) => void;
   onSearch: (query: string) => void;
   onNavigate: (path: string) => void;
@@ -34,7 +35,11 @@ const TEXT = {
   unpin: '\u30d4\u30f3\u3092\u5916\u3059',
   pin: '\u30d4\u30f3\u7559\u3081',
   confirmDelete: '\u672c\u5f53\u306b\u524a\u9664',
+  cancel: '\u30ad\u30e3\u30f3\u30bb\u30eb',
+  rename: '\u540d\u524d\u5909\u66f4',
   delete: '\u524a\u9664',
+  deleteTitle: '\u30c1\u30e3\u30c3\u30c8\u3092\u524a\u9664',
+  deleteMessage: '\u3053\u306e\u30c1\u30e3\u30c3\u30c8\u3068\u30e1\u30c3\u30bb\u30fc\u30b8\u3092\u524a\u9664\u3057\u307e\u3059\u3002\u3053\u306e\u64cd\u4f5c\u306f\u53d6\u308a\u6d88\u305b\u307e\u305b\u3093\u3002',
   settings: '\u8a2d\u5b9a',
   theme: '\u8868\u793a\u30c6\u30fc\u30de',
   dark: '\u30c0\u30fc\u30af',
@@ -59,12 +64,13 @@ export default function Sidebar({
   onSelect,
   onNewChat,
   onDelete,
+  onRename,
   onPin,
   onSearch,
   onNavigate,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -207,13 +213,17 @@ export default function Sidebar({
                   </div>
                 </div>
 
-                <div className="hidden group-hover:flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onPin(conv.id, !conv.pinned);
                     }}
-                    className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors"
+                    className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
+                      conv.pinned
+                        ? 'text-[var(--accent)] hover:bg-[var(--surface)]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface)]'
+                    }`}
                     title={conv.pinned ? TEXT.unpin : TEXT.pin}
                   >
                     <svg
@@ -230,20 +240,26 @@ export default function Sidebar({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirmDelete === conv.id) {
-                        onDelete(conv.id);
-                        setConfirmDelete(null);
-                      } else {
-                        setConfirmDelete(conv.id);
-                        setTimeout(() => setConfirmDelete(null), 3000);
+                      const next = window.prompt(TEXT.rename, conv.title)?.trim();
+                      if (next && next !== conv.title) {
+                        onRename(conv.id, next);
                       }
                     }}
-                    className={`p-1 transition-colors ${
-                      confirmDelete === conv.id
-                        ? 'text-[var(--danger)]'
-                        : 'text-[var(--text-secondary)] hover:text-[var(--danger)]'
-                    }`}
-                    title={confirmDelete === conv.id ? TEXT.confirmDelete : TEXT.delete}
+                    className="w-7 h-7 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
+                    title={TEXT.rename}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(conv);
+                    }}
+                    className="w-7 h-7 rounded-md text-[var(--text-secondary)] hover:text-[var(--danger)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
+                    title={TEXT.delete}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3,6 5,6 21,6" />
@@ -292,6 +308,33 @@ export default function Sidebar({
           </div>
         </div>
       </aside>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--sidebar-bg)] p-5">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-2">{TEXT.deleteTitle}</h3>
+            <p className="text-sm leading-6 text-[var(--text-secondary)] mb-3">{deleteTarget.title}</p>
+            <p className="text-sm leading-6 text-[var(--text-secondary)] mb-5">{TEXT.deleteMessage}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors"
+              >
+                {TEXT.cancel}
+              </button>
+              <button
+                onClick={() => {
+                  onDelete(deleteTarget.id);
+                  setDeleteTarget(null);
+                }}
+                className="px-4 py-2 rounded-lg bg-[var(--danger)] text-white hover:brightness-95 transition-colors"
+              >
+                {TEXT.confirmDelete}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

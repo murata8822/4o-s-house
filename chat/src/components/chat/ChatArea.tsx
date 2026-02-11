@@ -40,7 +40,7 @@ const TEXT = {
   composerLarger: '\u5165\u529b\u6b04\u3092\u62e1\u5927',
 };
 
-const COMPOSER_MIN_HEIGHT = 68;
+const COMPOSER_MIN_HEIGHT = 84;
 const COMPOSER_MAX_HEIGHT = 300;
 const COMPOSER_STEP = 36;
 
@@ -291,7 +291,7 @@ export default function ChatArea({
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-base font-medium text-[var(--accent)]">4o</span>
               </div>
-              <div className="text-base leading-4 text-[var(--text-primary)] whitespace-pre-wrap">
+              <div className="text-base leading-5 text-[var(--text-primary)] whitespace-pre-wrap">
                 {streamingText || (
                   <div className="flex gap-1 py-2">
                     <span className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce [animation-delay:-0.32s]" />
@@ -398,7 +398,7 @@ export default function ChatArea({
               placeholder={TEXT.inputPlaceholder}
               rows={1}
               style={{ height: `${composerHeight}px` }}
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl py-4 pl-14 pr-32 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] resize-none transition-colors"
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl pt-4 pb-14 pl-14 pr-32 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] resize-none transition-colors"
             />
 
             <div className="absolute left-2.5 bottom-2.5">
