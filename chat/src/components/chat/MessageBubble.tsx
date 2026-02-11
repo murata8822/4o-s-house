@@ -15,16 +15,16 @@ export default function MessageBubble({ message, showTimestamp }: MessageBubbleP
 
   return (
     <div className="animate-fadeIn">
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="flex items-center gap-2 mb-2">
         <span
-          className={`text-sm font-medium ${
+          className={`text-base leading-6 font-medium ${
             isUser ? 'text-[#ececec]' : 'text-[#10a37f]'
           }`}
         >
           {isUser ? 'あなた' : '4o'}
         </span>
         {showTimestamp && (
-          <span className="text-xs text-[#6b6b6b]">
+          <span className="text-sm leading-5 text-[#6b6b6b]">
             {new Date(message.created_at).toLocaleTimeString('ja-JP', {
               hour: '2-digit',
               minute: '2-digit',
@@ -32,7 +32,7 @@ export default function MessageBubble({ message, showTimestamp }: MessageBubbleP
           </span>
         )}
         {!isUser && message.model && (
-          <span className="text-xs text-[#6b6b6b] bg-[#2f2f2f] px-2 py-0.5 rounded-full">
+          <span className="text-xs text-[#6b6b6b] bg-[#2f2f2f] px-2 py-1 rounded-full">
             {message.model}
           </span>
         )}
@@ -50,7 +50,7 @@ export default function MessageBubble({ message, showTimestamp }: MessageBubbleP
       )}
 
       <div
-        className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
+        className={`text-base leading-8 whitespace-pre-wrap break-words ${
           isUser ? 'text-[#ececec]' : 'text-[#ececec]'
         }`}
       >
