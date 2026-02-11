@@ -8,6 +8,7 @@ interface SidebarProps {
   conversations: Conversation[];
   currentId: string | null;
   isOpen: boolean;
+  isLoading: boolean;
   onClose: () => void;
   onSelect: (id: string) => void;
   onNewChat: () => void;
@@ -21,6 +22,7 @@ export default function Sidebar({
   conversations,
   currentId,
   isOpen,
+  isLoading,
   onClose,
   onSelect,
   onNewChat,
@@ -55,7 +57,7 @@ export default function Sidebar({
         }`}
       >
         {/* New Chat Button */}
-        <div className="p-3">
+        <div className="p-4">
           <button
             onClick={() => {
               onNewChat();
@@ -74,7 +76,7 @@ export default function Sidebar({
         </div>
 
         {/* Search */}
-        <div className="px-3 pb-2">
+        <div className="px-4 pb-3">
           <input
             type="text"
             value={searchQuery}
@@ -85,8 +87,14 @@ export default function Sidebar({
         </div>
 
         {/* Conversation List */}
-        <div className="flex-1 overflow-y-auto px-2 scrollbar-thin">
-          {conversations.length === 0 && (
+        <div className="flex-1 overflow-y-auto px-3 scrollbar-thin">
+          {isLoading && (
+            <div className="flex items-center justify-center py-8 text-[#9b9b9b]">
+              <span className="inline-block w-5 h-5 border-2 border-[#424242] border-t-[#10a37f] rounded-full animate-spin" />
+              <span className="ml-2 text-sm">読み込み中...</span>
+            </div>
+          )}
+          {!isLoading && conversations.length === 0 && (
             <div className="text-center text-[#9b9b9b] text-sm py-8">
               {searchQuery ? '見つかりません' : 'チャットがありません'}
             </div>

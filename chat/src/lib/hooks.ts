@@ -38,6 +38,7 @@ export function useConversations() {
   const [loading, setLoading] = useState(true);
 
   const fetchConversations = useCallback(async (search?: string) => {
+    setLoading(true);
     const url = search ? `/api/conversations?search=${encodeURIComponent(search)}` : '/api/conversations';
     const res = await fetch(url);
     if (res.ok) {
