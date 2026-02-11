@@ -56,11 +56,11 @@ export default function MessageBubble({
         )}
 
         {isUser ? (
-          <div className="ml-auto rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-5 py-4 text-base leading-8 whitespace-pre-wrap break-words text-[var(--text-primary)]">
+          <div className="ml-auto rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-5 py-4 text-base leading-4 whitespace-pre-wrap break-words text-[var(--text-primary)]">
             {message.content_text}
           </div>
         ) : (
-          <div className="mr-auto rounded-2xl bg-[var(--surface-soft)] border border-[var(--border)] px-5 py-4 text-base leading-8 whitespace-pre-wrap break-words text-[var(--text-primary)] max-w-[min(86%,820px)]">
+          <div className="mr-auto rounded-2xl bg-[var(--surface-soft)] border border-[var(--border)] px-5 py-4 text-base leading-4 whitespace-pre-wrap break-words text-[var(--text-primary)] max-w-[min(86%,820px)]">
             {message.content_text}
           </div>
         )}
