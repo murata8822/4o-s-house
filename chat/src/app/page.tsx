@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConversations, useMessages, useSettings, useStreaming } from '@/lib/hooks';
 import { useTheme } from '@/lib/theme';
+import { readShowMessageModel } from '@/lib/preferences';
 import type { ModelId, Message, Conversation } from '@/types';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatArea from '@/components/chat/ChatArea';
@@ -18,6 +19,7 @@ export default function Home() {
   const [currentConvStartedAt, setCurrentConvStartedAt] = useState<string | null>(null);
   const [currentConvUpdatedAt, setCurrentConvUpdatedAt] = useState<string | null>(null);
   const [currentConvTitle, setCurrentConvTitle] = useState<string | null>(null);
+  const [showMessageModel, setShowMessageModel] = useState(true);
   const { theme, setTheme } = useTheme();
 
   const { settings } = useSettings();
@@ -39,6 +41,10 @@ export default function Home() {
       setCurrentModel(settings.default_model);
     }
   }, [settings]);
+
+  useEffect(() => {
+    setShowMessageModel(readShowMessageModel());
+  }, []);
 
   // Default sidebar state: open on desktop, closed on mobile.
   useEffect(() => {
@@ -232,6 +238,7 @@ export default function Home() {
         conversationTitle={currentConvTitle}
         createdAt={currentConvStartedAt}
         updatedAt={currentConvUpdatedAt}
+        showMessageModel={showMessageModel}
         isStreaming={isStreaming}
         streamingText={streamingText}
         currentModel={currentModel}

@@ -11,6 +11,7 @@ interface ChatAreaProps {
   conversationTitle: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  showMessageModel: boolean;
   isStreaming: boolean;
   streamingText: string;
   currentModel: ModelId;
@@ -42,6 +43,7 @@ export default function ChatArea({
   conversationTitle,
   createdAt,
   updatedAt,
+  showMessageModel,
   isStreaming,
   streamingText,
   currentModel,
@@ -268,6 +270,7 @@ export default function ChatArea({
               key={msg.id}
               message={msg}
               showTimestamp={timestampsEnabled}
+              showModel={showMessageModel}
               onCopyUserMessage={handleCopyUserMessage}
               onEditUserMessage={handleEditUserMessage}
             />

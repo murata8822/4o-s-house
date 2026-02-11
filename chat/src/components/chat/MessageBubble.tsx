@@ -5,12 +5,12 @@ import type { Message } from '@/types';
 interface MessageBubbleProps {
   message: Message;
   showTimestamp: boolean;
+  showModel: boolean;
   onCopyUserMessage?: (message: Message) => void;
   onEditUserMessage?: (message: Message) => void;
 }
 
 const TEXT = {
-  you: '\u3042\u306a\u305f',
   attachedImage: '\u753b\u50cf\u6dfb\u4ed8',
   copy: '\u30b3\u30d4\u30fc',
   editAndRegenerate: '\u7de8\u96c6\u3057\u3066\u518d\u751f\u6210',
@@ -19,6 +19,7 @@ const TEXT = {
 export default function MessageBubble({
   message,
   showTimestamp,
+  showModel,
   onCopyUserMessage,
   onEditUserMessage,
 }: MessageBubbleProps) {
@@ -32,13 +33,7 @@ export default function MessageBubble({
     <div className={`animate-fadeIn ${isUser ? 'flex justify-end' : ''}`}>
       <div className={isUser ? 'w-full max-w-[min(86%,820px)]' : 'w-full'}>
         <div className={`flex items-center gap-2 mb-2 ${isUser ? 'justify-end' : ''}`}>
-          <span
-            className={`text-base leading-6 font-medium ${
-              isUser ? 'text-[var(--text-secondary)]' : 'text-[var(--accent)]'
-            }`}
-          >
-            {isUser ? TEXT.you : '4o'}
-          </span>
+          {!isUser && <span className="text-base leading-6 font-medium text-[var(--accent)]">4o</span>}
           {showTimestamp && (
             <span className="text-sm leading-5 text-[var(--text-muted)]">
               {new Date(message.created_at).toLocaleTimeString('ja-JP', {
@@ -47,7 +42,7 @@ export default function MessageBubble({
               })}
             </span>
           )}
-          {!isUser && message.model && (
+          {!isUser && showModel && message.model && (
             <span className="text-xs text-[var(--text-muted)] bg-[var(--surface)] px-2 py-1 rounded-full">
               {message.model}
             </span>
@@ -65,7 +60,7 @@ export default function MessageBubble({
             {message.content_text}
           </div>
         ) : (
-          <div className="text-base leading-8 whitespace-pre-wrap break-words text-[var(--text-primary)]">
+          <div className="mr-auto rounded-2xl bg-[var(--surface-soft)] border border-[var(--border)] px-5 py-4 text-base leading-8 whitespace-pre-wrap break-words text-[var(--text-primary)] max-w-[min(86%,820px)]">
             {message.content_text}
           </div>
         )}
