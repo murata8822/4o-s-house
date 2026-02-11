@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConversations, useMessages, useSettings, useStreaming } from '@/lib/hooks';
+import { useTheme } from '@/lib/theme';
 import type { ModelId, Message, Conversation } from '@/types';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatArea from '@/components/chat/ChatArea';
@@ -16,6 +17,7 @@ export default function Home() {
   const [streamingText, setStreamingText] = useState('');
   const [currentConvStartedAt, setCurrentConvStartedAt] = useState<string | null>(null);
   const [currentConvTitle, setCurrentConvTitle] = useState<string | null>(null);
+  const { theme, setTheme } = useTheme();
 
   const { settings } = useSettings();
   const {
@@ -199,12 +201,14 @@ export default function Home() {
   }, [messages, handleSend, setMessages]);
 
   return (
-    <div className="flex h-[100dvh] bg-[#212121]">
+    <div className="flex h-[100dvh] bg-[var(--bg)] text-[var(--text-primary)]">
       <Sidebar
         conversations={conversations}
         currentId={currentConvId}
         isOpen={sidebarOpen}
         isLoading={conversationsLoading}
+        theme={theme}
+        onThemeChange={setTheme}
         onClose={() => setSidebarOpen(false)}
         onSelect={handleSelectConversation}
         onNewChat={handleNewChat}
