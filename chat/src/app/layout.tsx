@@ -45,7 +45,18 @@ export default function RootLayout({
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                  var isProd = '${process.env.NODE_ENV}' === 'production';
+
+                  if (isProd) {
+                    navigator.serviceWorker.register('/sw.js').catch(function() {});
+                    return;
+                  }
+
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(registration) {
+                      registration.unregister();
+                    });
+                  });
                 });
               }
             `,

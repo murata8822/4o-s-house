@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { supabase } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
@@ -12,79 +12,67 @@ export default function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // URLの ?error= を表示
   useEffect(() => {
     const error = searchParams.get('error');
+    const reason = searchParams.get('reason');
+
     if (error === 'not_allowed') {
-      setMessage('このメールアドレスはアクセスが許可されていません。');
-    } else if (error === 'auth_failed') {
-      setMessage('認証に失敗しました。もう一度お試しください。');
+      setMessage('This email is not in ALLOWED_EMAILS.');
+      return;
+    }
+
+    if (error === 'auth_failed') {
+      setMessage(reason ? `Auth failed: ${reason}` : 'Authentication failed.');
     }
   }, [searchParams]);
 
-  // ハッシュフラグメントからトークンを取得してセッション確立
   useEffect(() => {
-    const handleAuthFromHash = async () => {
-      const hash = window.location.hash;
-      if (!hash || !hash.includes('access_token')) return;
+    const code = searchParams.get('code');
+    if (!code) return;
 
-      // #access_token=xxx&refresh_token=yyy&... をパース
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
+    window.location.replace(`/api/auth/callback?code=${encodeURIComponent(code)}`);
+  }, [searchParams]);
 
-      if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (!error) {
-          // ハッシュをURLから消してトップへ
-          window.location.replace('/');
-          return;
-        }
-      }
-    };
-
-    handleAuthFromHash();
-  }, []);
-
-  // onAuthStateChange でログイン検知（フォールバック）
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        router.push('/');
-      }
-    });
-
-    // すでにログイン済みならトップへ
     const checkSession = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!error && user) router.push('/');
-    };
-    checkSession();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-    return () => {
-      subscription.unsubscribe();
+      if (!error && user) {
+        router.replace('/');
+      }
     };
+
+    checkSession();
   }, [router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     setMessage('');
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/api/auth/callback`,
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       setMessage(error.message);
       setLoading(false);
+      return;
     }
+
+    if (data?.url) {
+      window.location.assign(data.url);
+      return;
+    }
+
+    setMessage('Failed to start Google sign-in.');
+    setLoading(false);
   };
 
   const handleMagicLink = async () => {
@@ -103,7 +91,7 @@ export default function AuthContent() {
     if (error) {
       setMessage(error.message);
     } else {
-      setMessage('ログインリンクをメールに送信しました。');
+      setMessage('Magic link sent. Please check your email.');
     }
 
     setLoading(false);
@@ -117,7 +105,7 @@ export default function AuthContent() {
             4o
           </div>
           <h1 className="text-xl font-semibold text-white">4o&apos;s House</h1>
-          <p className="text-[#9b9b9b] text-sm mt-1">ログインして始めましょう</p>
+          <p className="text-[#9b9b9b] text-sm mt-1">Sign in to continue</p>
         </div>
 
         {message && (
@@ -131,12 +119,12 @@ export default function AuthContent() {
           disabled={loading}
           className="w-full bg-white text-gray-800 rounded-lg py-3 px-4 font-medium text-sm flex items-center justify-center gap-3 hover:bg-gray-100 transition-colors disabled:opacity-50 mb-4"
         >
-          Googleでログイン
+          Sign in with Google
         </button>
 
         <div className="flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-[#424242]" />
-          <span className="text-[#9b9b9b] text-xs">または</span>
+          <span className="text-[#9b9b9b] text-xs">or</span>
           <div className="flex-1 h-px bg-[#424242]" />
         </div>
 
@@ -145,7 +133,7 @@ export default function AuthContent() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="メールアドレス"
+            placeholder="Email address"
             className="w-full bg-[#2f2f2f] border border-[#424242] rounded-lg py-3 px-4 text-white text-sm placeholder-[#9b9b9b] outline-none focus:border-[#10a37f] transition-colors"
           />
           <button
@@ -153,7 +141,7 @@ export default function AuthContent() {
             disabled={loading || !email}
             className="w-full bg-[#10a37f] text-white rounded-lg py-3 px-4 font-medium text-sm hover:bg-[#1a7f64] transition-colors disabled:opacity-50"
           >
-            Magic Linkを送信
+            Send Magic Link
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+﻿import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -9,10 +9,19 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createServerSupabaseClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+
+    const errorUrl = new URL('/auth', origin);
+    errorUrl.searchParams.set('error', 'auth_failed');
+    errorUrl.searchParams.set('reason', error.message);
+    return NextResponse.redirect(errorUrl.toString());
   }
 
-  return NextResponse.redirect(`${origin}/auth?error=auth_failed`);
+  const errorUrl = new URL('/auth', origin);
+  errorUrl.searchParams.set('error', 'auth_failed');
+  errorUrl.searchParams.set('reason', 'missing_code');
+  return NextResponse.redirect(errorUrl.toString());
 }
