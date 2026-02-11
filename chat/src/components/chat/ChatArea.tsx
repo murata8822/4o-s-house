@@ -3,14 +3,14 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Message, ModelId } from '@/types';
 import { MODELS } from '@/types';
-import { useElapsedTime } from '@/lib/hooks';
 import MessageBubble from './MessageBubble';
 import ModelPicker from './ModelPicker';
 
 interface ChatAreaProps {
   messages: Message[];
   conversationTitle: string | null;
-  startedAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
   isStreaming: boolean;
   streamingText: string;
   currentModel: ModelId;
@@ -24,8 +24,8 @@ interface ChatAreaProps {
 
 const TEXT = {
   toggleSidebar: '\u30b5\u30a4\u30c9\u30d0\u30fc\u3092\u958b\u9589',
-  start: '\u958b\u59cb',
-  elapsed: '\u7d4c\u904e',
+  created: '\u4f5c\u6210',
+  updated: '\u66f4\u65b0',
   emptySub: '\u4f55\u3067\u3082\u805e\u3044\u3066\u304f\u3060\u3055\u3044',
   imageTooLarge: '\u753b\u50cf\u306f20MB\u4ee5\u4e0b\u306b\u3057\u3066\u304f\u3060\u3055\u3044',
   stop: '\u505c\u6b62',
@@ -37,7 +37,8 @@ const TEXT = {
 export default function ChatArea({
   messages,
   conversationTitle,
-  startedAt,
+  createdAt,
+  updatedAt,
   isStreaming,
   streamingText,
   currentModel,
@@ -54,7 +55,14 @@ export default function ChatArea({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const elapsed = useElapsedTime(startedAt);
+
+  const formatMetaDate = (iso: string) =>
+    new Date(iso).toLocaleString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -103,7 +111,7 @@ export default function ChatArea({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 bg-[var(--bg)] text-[var(--text-primary)]">
-      <header className="flex items-center gap-3 px-7 md:px-8 py-4 border-b border-[var(--border)]">
+      <header className="flex items-center gap-3 px-8 md:px-10 py-4 border-b border-[var(--border)]">
         <button
           onClick={onToggleSidebar}
           className="text-[var(--text-primary)] p-2.5 rounded-lg active:scale-95 transition-transform hover:bg-[var(--surface)]"
@@ -123,22 +131,27 @@ export default function ChatArea({
           {modelLabel}
         </button>
 
-        {startedAt && elapsed && (
-          <div className="hidden sm:flex items-center gap-2 text-sm leading-5 text-[var(--text-muted)]">
-            <span>
-              {TEXT.start} {new Date(startedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <span>
-              / {TEXT.elapsed} {elapsed}
-            </span>
-          </div>
-        )}
-
-        {conversationTitle && (
-          <div className="hidden md:block flex-1 text-base leading-6 text-[var(--text-secondary)] truncate text-right">
-            {conversationTitle}
-          </div>
-        )}
+        <div className="hidden md:flex items-center gap-4 ml-auto min-w-0">
+          {conversationTitle && (
+            <div className="text-base leading-6 text-[var(--text-secondary)] truncate max-w-[360px] text-right">
+              {conversationTitle}
+            </div>
+          )}
+          {(createdAt || updatedAt) && (
+            <div className="text-[11px] leading-4 text-[var(--text-muted)] text-right whitespace-nowrap">
+              {createdAt && (
+                <div>
+                  {TEXT.created}: {formatMetaDate(createdAt)}
+                </div>
+              )}
+              {updatedAt && (
+                <div>
+                  {TEXT.updated}: {formatMetaDate(updatedAt)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       {showModelPicker && (
@@ -152,7 +165,7 @@ export default function ChatArea({
         />
       )}
 
-      <div className="flex-1 overflow-y-auto px-7 md:px-8 py-7">
+      <div className="flex-1 overflow-y-auto px-8 md:px-10 py-7">
         {!hasMessages && (
           <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] -translate-y-[-10px]">
             <div className="w-16 h-16 bg-[var(--accent)] rounded-2xl flex items-center justify-center text-white text-2xl font-semibold mb-4">
@@ -190,7 +203,7 @@ export default function ChatArea({
         </div>
       </div>
 
-      <div className="input-area px-7 md:px-8 pb-4 pt-2.5 bg-[var(--bg)]">
+      <div className="input-area px-8 md:px-10 pb-4 pt-2.5 bg-[var(--bg)]">
         <div className="max-w-5xl mx-auto">
           {imagePreview && (
             <div className="mb-2 relative inline-block">

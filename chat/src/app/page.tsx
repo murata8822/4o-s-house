@@ -16,6 +16,7 @@ export default function Home() {
   const [currentModel, setCurrentModel] = useState<ModelId>('gpt-4o-2024-11-20');
   const [streamingText, setStreamingText] = useState('');
   const [currentConvStartedAt, setCurrentConvStartedAt] = useState<string | null>(null);
+  const [currentConvUpdatedAt, setCurrentConvUpdatedAt] = useState<string | null>(null);
   const [currentConvTitle, setCurrentConvTitle] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
 
@@ -59,10 +60,12 @@ export default function Home() {
       const conv = conversations.find((c) => c.id === currentConvId);
       if (conv) {
         setCurrentConvStartedAt(conv.started_at);
+        setCurrentConvUpdatedAt(conv.updated_at);
         setCurrentConvTitle(conv.title);
       }
     } else {
       setCurrentConvStartedAt(null);
+      setCurrentConvUpdatedAt(null);
       setCurrentConvTitle(null);
     }
   }, [currentConvId, conversations]);
@@ -89,6 +92,7 @@ export default function Home() {
         convId = conv.id;
         setCurrentConvId(convId);
         setCurrentConvStartedAt(conv.started_at);
+        setCurrentConvUpdatedAt(conv.updated_at);
         setCurrentConvTitle(conv.title);
       }
 
@@ -226,7 +230,8 @@ export default function Home() {
       <ChatArea
         messages={messages}
         conversationTitle={currentConvTitle}
-        startedAt={currentConvStartedAt}
+        createdAt={currentConvStartedAt}
+        updatedAt={currentConvUpdatedAt}
         isStreaming={isStreaming}
         streamingText={streamingText}
         currentModel={currentModel}

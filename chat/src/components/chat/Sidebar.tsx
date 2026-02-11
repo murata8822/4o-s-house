@@ -78,11 +78,11 @@ export default function Sidebar({
       <aside
         className={`fixed md:relative left-0 top-0 bottom-0 bg-[var(--sidebar-bg)] flex flex-col z-50 overflow-hidden transition-[transform,width] duration-300 ${
           isOpen
-            ? 'w-[328px] translate-x-0 border-r border-[var(--border)]'
-            : 'w-[328px] -translate-x-full md:translate-x-0 md:w-0 border-r-0'
+            ? 'w-[360px] translate-x-0 border-r border-[var(--border)]'
+            : 'w-[360px] -translate-x-full md:translate-x-0 md:w-0 border-r-0'
         }`}
       >
-        <div className="pt-5 pb-4 pl-6 pr-4">
+        <div className="pt-6 pb-4 px-6">
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs tracking-wide text-[var(--text-muted)] font-medium">{TEXT.menu}</div>
             <button
@@ -97,22 +97,25 @@ export default function Sidebar({
             </button>
           </div>
 
-          <button
-            onClick={() => {
-              onNewChat();
-              if (window.matchMedia('(max-width: 767px)').matches) onClose();
-            }}
-            className="w-full py-4 px-4 rounded-xl text-[var(--text-primary)] text-[17px] font-semibold leading-6 flex items-center gap-3 border border-[var(--border)] bg-transparent hover:bg-[var(--surface)] active:scale-[0.985] transition-all"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            {TEXT.newChat}
-          </button>
+          <div className="flex justify-center pt-1">
+            <button
+              onClick={() => {
+                onNewChat();
+                if (window.matchMedia('(max-width: 767px)').matches) onClose();
+              }}
+              className="w-[58px] h-[58px] rounded-2xl text-[var(--text-primary)] border border-[var(--border)] bg-transparent hover:bg-[var(--surface)] active:scale-[0.985] transition-all flex items-center justify-center"
+              aria-label={TEXT.newChat}
+              title={TEXT.newChat}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <div className="pl-6 pr-4 pb-3">
+        <div className="px-6 pb-4">
           <div className="relative">
             <svg
               width="16"
@@ -121,7 +124,7 @@ export default function Sidebar({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] pointer-events-none"
             >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -131,18 +134,18 @@ export default function Sidebar({
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder={TEXT.searchChat}
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg py-3 pl-10 pr-3 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] transition-colors"
+              className="w-full h-[50px] bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-11 pr-4 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] transition-colors"
             />
           </div>
         </div>
 
-        <div className="pl-5 pr-4 pb-3">
+        <div className="px-6 pb-3">
           <button
             onClick={() => {
               onNavigate('/album');
               if (window.matchMedia('(max-width: 767px)').matches) onClose();
             }}
-            className="w-full py-3.5 px-4 text-left text-base leading-6 text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface)] transition-colors flex items-center gap-3"
+            className="w-full py-4 px-4 text-left text-base leading-6 text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface)] transition-colors flex items-center gap-3"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -153,12 +156,12 @@ export default function Sidebar({
           </button>
         </div>
 
-        <div className="menu-divider mx-4 mb-3" />
+        <div className="menu-divider mx-5 mb-3" />
         <div className="px-6 pb-2">
           <div className="text-xs tracking-wide text-[var(--text-muted)] font-medium">{TEXT.history}</div>
         </div>
 
-        <div className="flex-1 overflow-y-auto pl-4 pr-3 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-5 scrollbar-thin">
           {isLoading && (
             <div className="flex items-center justify-center py-8 text-[var(--text-secondary)]">
               <span className="inline-block w-5 h-5 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin" />
@@ -181,7 +184,7 @@ export default function Sidebar({
                   onSelect(conv.id);
                   if (window.matchMedia('(max-width: 767px)').matches) onClose();
                 }}
-                className={`group relative flex items-center gap-2 py-3.5 pl-4 pr-3 rounded-lg cursor-pointer mb-0.5 transition-colors ${
+                className={`group relative flex items-center gap-2 py-4 pl-5 pr-4 rounded-xl cursor-pointer mb-1 transition-colors ${
                   active
                     ? 'bg-[var(--surface)] text-[var(--text-primary)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]'
@@ -253,14 +256,14 @@ export default function Sidebar({
           })}
         </div>
 
-        <div className="menu-divider mx-4 mt-2" />
-        <div className="pl-5 pr-4 pt-3 pb-5">
+        <div className="menu-divider mx-5 mt-2" />
+        <div className="px-6 pt-3 pb-6">
           <button
             onClick={() => {
               onNavigate('/settings');
               if (window.matchMedia('(max-width: 767px)').matches) onClose();
             }}
-            className="w-full py-4 px-4 text-left text-[17px] leading-6 text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
+            className="w-full py-4 px-4 text-left text-[17px] leading-6 text-[var(--text-secondary)] rounded-xl hover:bg-[var(--surface)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3" />
@@ -276,7 +279,7 @@ export default function Sidebar({
                 <button
                   key={item.id}
                   onClick={() => onThemeChange(item.id)}
-                  className={`py-2.5 px-2 rounded-lg text-[12px] font-medium border transition-colors ${
+                  className={`min-h-[56px] px-2 rounded-xl text-[13px] font-medium border transition-colors ${
                     theme === item.id
                       ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--surface-soft)]'
                       : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface)]'
