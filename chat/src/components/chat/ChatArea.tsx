@@ -12,6 +12,7 @@ interface ChatAreaProps {
   createdAt: string | null;
   updatedAt: string | null;
   showMessageModel: boolean;
+  showCostDetails: boolean;
   isStreaming: boolean;
   streamingText: string;
   currentModel: ModelId;
@@ -20,6 +21,7 @@ interface ChatAreaProps {
   onStop: () => void;
   onModelChange: (model: ModelId) => void;
   onToggleSidebar: () => void;
+  onToggleCostDetails: () => void;
   onRetry: () => void;
   onEditAndRegenerate?: (target: Message, text: string, imageData?: string) => Promise<void> | void;
   onNotify?: (message: string, kind?: 'success' | 'error' | 'info') => void;
@@ -29,6 +31,9 @@ const TEXT = {
   toggleSidebar: '\u30b5\u30a4\u30c9\u30d0\u30fc\u3092\u958b\u9589',
   created: '\u4f5c\u6210',
   updated: '\u66f4\u65b0',
+  copyConversation: '\u4f1a\u8a71\u3092\u5168\u6587\u30b3\u30d4\u30fc',
+  toggleCostOn: '\u6599\u91d1\u8868\u793a\u3092OFF',
+  toggleCostOff: '\u6599\u91d1\u8868\u793a\u3092ON',
   emptySub: '\u4f55\u3067\u3082\u805e\u3044\u3066\u304f\u3060\u3055\u3044',
   imageTooLarge: '\u753b\u50cf\u306f20MB\u4ee5\u4e0b\u306b\u3057\u3066\u304f\u3060\u3055\u3044',
   stop: '\u505c\u6b62',
@@ -46,6 +51,7 @@ const TEXT = {
   cancelEdit: '\u7de8\u96c6\u3092\u3084\u3081\u308b',
   copied: '\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f',
   copyFailed: '\u30b3\u30d4\u30fc\u306b\u5931\u6557\u3057\u307e\u3057\u305f',
+  conversationCopied: '\u4f1a\u8a71\u3092\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f',
 };
 
 const COMPOSER_MIN_HEIGHT = 84;
@@ -64,6 +70,7 @@ export default function ChatArea({
   createdAt,
   updatedAt,
   showMessageModel,
+  showCostDetails,
   isStreaming,
   streamingText,
   currentModel,
@@ -72,6 +79,7 @@ export default function ChatArea({
   onStop,
   onModelChange,
   onToggleSidebar,
+  onToggleCostDetails,
   onRetry,
   onEditAndRegenerate,
   onNotify,
@@ -214,6 +222,20 @@ export default function ChatArea({
     }
   };
 
+  const handleCopyConversation = async () => {
+    const fullText = messages
+      .map((m) => `${m.role === 'user' ? 'あなた' : '4o'}:\n${m.content_text || ''}`)
+      .join('\n\n');
+
+    if (!fullText.trim()) return;
+    try {
+      await navigator.clipboard.writeText(fullText);
+      onNotify?.(TEXT.conversationCopied, 'success');
+    } catch {
+      onNotify?.(TEXT.copyFailed, 'error');
+    }
+  };
+
   const handleEditUserMessage = (msg: Message) => {
     setEditingTarget(msg);
     setInputText(msg.content_text || '');
@@ -327,7 +349,23 @@ export default function ChatArea({
           {modelLabel}
         </button>
 
-        <div className="hidden md:flex items-center gap-4 ml-auto min-w-0">
+        <div className="hidden md:flex items-center gap-2 ml-auto min-w-0">
+          <button
+            onClick={handleCopyConversation}
+            className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors"
+            title={TEXT.copyConversation}
+            aria-label={TEXT.copyConversation}
+          >
+            ⧉
+          </button>
+          <button
+            onClick={onToggleCostDetails}
+            className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors"
+            title={showCostDetails ? TEXT.toggleCostOn : TEXT.toggleCostOff}
+            aria-label={showCostDetails ? TEXT.toggleCostOn : TEXT.toggleCostOff}
+          >
+            $
+          </button>
           {conversationTitle && (
             <div className="text-base leading-6 text-[var(--text-secondary)] truncate max-w-[360px] text-right">
               {conversationTitle}
@@ -382,6 +420,7 @@ export default function ChatArea({
               message={msg}
               showTimestamp={timestampsEnabled}
               showModel={showMessageModel}
+              showCostDetails={showCostDetails}
               onCopyUserMessage={handleCopyUserMessage}
               onCopyAssistantMessage={handleCopyAssistantMessage}
               onEditUserMessage={handleEditUserMessage}

@@ -4,7 +4,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConversations, useMessages, useSettings, useStreaming } from '@/lib/hooks';
 import { useTheme } from '@/lib/theme';
-import { readShowMessageModel, readLastModel, writeLastModel } from '@/lib/preferences';
+import {
+  readShowMessageModel,
+  readLastModel,
+  readShowCostDetails,
+  writeLastModel,
+  writeShowCostDetails,
+} from '@/lib/preferences';
 import type { ModelId, Message, Conversation } from '@/types';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatArea from '@/components/chat/ChatArea';
@@ -28,6 +34,7 @@ export default function Home() {
   const [currentConvUpdatedAt, setCurrentConvUpdatedAt] = useState<string | null>(null);
   const [currentConvTitle, setCurrentConvTitle] = useState<string | null>(null);
   const [showMessageModel, setShowMessageModel] = useState(true);
+  const [showCostDetails, setShowCostDetails] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const { theme, setTheme } = useTheme();
@@ -126,6 +133,7 @@ export default function Home() {
 
   useEffect(() => {
     setShowMessageModel(readShowMessageModel());
+    setShowCostDetails(readShowCostDetails());
   }, []);
 
   useEffect(() => {
@@ -164,6 +172,15 @@ export default function Home() {
   const notify = useCallback((message: string, kind: ToastKind = 'info') => {
     setToast({ id: Date.now(), message, kind });
   }, []);
+
+  const handleToggleCostDetails = useCallback(() => {
+    setShowCostDetails((prev) => {
+      const next = !prev;
+      writeShowCostDetails(next);
+      notify(next ? '料金表示をONにしました' : '料金表示をOFFにしました', 'info');
+      return next;
+    });
+  }, [notify]);
 
   const handleNewChat = useCallback(() => {
     setCurrentConvId(null);
@@ -319,6 +336,7 @@ export default function Home() {
         createdAt={currentConvStartedAt}
         updatedAt={currentConvUpdatedAt}
         showMessageModel={showMessageModel}
+        showCostDetails={showCostDetails}
         isStreaming={isStreaming}
         streamingText={streamingText}
         currentModel={currentModel}
@@ -327,6 +345,7 @@ export default function Home() {
         onStop={stopStream}
         onModelChange={setCurrentModel}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onToggleCostDetails={handleToggleCostDetails}
         onRetry={handleRetry}
         onEditAndRegenerate={handleEditAndRegenerate}
         onNotify={notify}

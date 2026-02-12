@@ -6,6 +6,7 @@ interface MessageBubbleProps {
   message: Message;
   showTimestamp: boolean;
   showModel: boolean;
+  showCostDetails?: boolean;
   onCopyUserMessage?: (message: Message) => void;
   onCopyAssistantMessage?: (message: Message) => void;
   onEditUserMessage?: (message: Message) => void;
@@ -21,6 +22,7 @@ export default function MessageBubble({
   message,
   showTimestamp,
   showModel,
+  showCostDetails = true,
   onCopyUserMessage,
   onCopyAssistantMessage,
   onEditUserMessage,
@@ -110,7 +112,7 @@ export default function MessageBubble({
           </div>
         )}
 
-        {!isUser && message.cost_usd !== null && message.cost_usd > 0 && (
+        {!isUser && showCostDetails && message.cost_usd !== null && message.cost_usd > 0 && (
           <div className="text-xs text-[var(--text-muted)] mt-1">
             {message.token_input && message.token_output
               ? `${message.token_input.toLocaleString()} in / ${message.token_output.toLocaleString()} out`
