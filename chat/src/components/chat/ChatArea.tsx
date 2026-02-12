@@ -38,11 +38,19 @@ const TEXT = {
   voiceInput: '\u97f3\u58f0\u5165\u529b',
   composerSmaller: '\u5165\u529b\u6b04\u3092\u7e2e\u5c0f',
   composerLarger: '\u5165\u529b\u6b04\u3092\u62e1\u5927',
+  cheerPrompt: '\u5143\u6c17\u30c1\u30e3\u30fc\u30b8',
+  cheerPromptInserted: '\u5fdc\u63f4\u30d7\u30ed\u30f3\u30d7\u30c8\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f',
 };
 
 const COMPOSER_MIN_HEIGHT = 84;
 const COMPOSER_MAX_HEIGHT = 300;
 const COMPOSER_STEP = 36;
+const CHEER_PROMPTS = [
+  '\u3044\u307e\u306e\u79c1\u306e\u6c17\u5206\u306b\u5408\u308f\u305b\u3066\u3001\u77ed\u3044\u5143\u6c17\u56de\u5fa9\u30e1\u30c3\u30bb\u30fc\u30b8\u3092\u4e00\u3064\u304f\u3060\u3055\u3044\u3002',
+  '\u3044\u307e\u306e\u79c1\u304c\u300c\u6b21\u306e10\u5206\u300d\u3060\u3051\u9032\u3081\u308b\u3088\u3046\u306b\u3001\u3068\u3066\u3082\u5c0f\u3055\u3044\u884c\u52d5\u30923\u3064\u3060\u3051\u51fa\u3057\u3066\u3002',
+  '\u512a\u3057\u3081\u3067\u3001\u629c\u3044\u3066\u6df1\u547c\u5438\u3067\u304d\u308b\u3088\u3046\u306a\u4e00\u8a00\u3092\u304f\u3060\u3055\u3044\u3002',
+  '\u3082\u3046\u4e00\u9811\u5f35\u308a\u3059\u304e\u306a\u3044\u3067\u6e08\u3080\u3088\u3046\u306b\u3001\u4eca\u65e5\u306e\u304a\u3057\u307e\u3044\u30eb\u30fc\u30eb\u3092\u4f5c\u3063\u3066\u3002',
+];
 
 export default function ChatArea({
   messages,
@@ -66,10 +74,13 @@ export default function ChatArea({
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [composerHeight, setComposerHeight] = useState(108);
+  const [cheerNotice, setCheerNotice] = useState(false);
+  const [lastCheerIndex, setLastCheerIndex] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const speechRef = useRef<{ stop: () => void } | null>(null);
+  const cheerTimerRef = useRef<number | null>(null);
 
   const formatMetaDate = (iso: string) =>
     new Date(iso).toLocaleString('ja-JP', {
@@ -92,6 +103,14 @@ export default function ChatArea({
   useEffect(() => {
     window.localStorage.setItem('chat.composer.height', String(composerHeight));
   }, [composerHeight]);
+
+  useEffect(() => {
+    return () => {
+      if (cheerTimerRef.current !== null) {
+        window.clearTimeout(cheerTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSend = () => {
     const text = inputText.trim();
@@ -193,6 +212,28 @@ export default function ChatArea({
     recognition.start();
     speechRef.current = recognition;
     setIsListening(true);
+  };
+
+  const handleCheerPrompt = () => {
+    if (!CHEER_PROMPTS.length) return;
+    let nextIndex = Math.floor(Math.random() * CHEER_PROMPTS.length);
+    if (CHEER_PROMPTS.length > 1 && nextIndex === lastCheerIndex) {
+      nextIndex = (nextIndex + 1) % CHEER_PROMPTS.length;
+    }
+    setLastCheerIndex(nextIndex);
+    const nextPrompt = CHEER_PROMPTS[nextIndex];
+    setInputText((prev) => (prev ? `${prev}\n${nextPrompt}` : nextPrompt));
+    setShowAttachMenu(false);
+    setCheerNotice(true);
+    if (cheerTimerRef.current !== null) {
+      window.clearTimeout(cheerTimerRef.current);
+    }
+    cheerTimerRef.current = window.setTimeout(() => setCheerNotice(false), 1400);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      const len = textareaRef.current?.value.length ?? 0;
+      textareaRef.current?.setSelectionRange(len, len);
+    });
   };
 
   const supportsSpeech =
@@ -309,28 +350,41 @@ export default function ChatArea({
 
       <div className="input-area absolute inset-x-0 bottom-0 px-8 md:px-10 pb-4 pt-4 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/95 to-transparent pointer-events-none">
         <div className="max-w-5xl mx-auto pointer-events-auto">
-          <div className="mb-2 flex justify-end gap-1.5">
+          <div className="mb-2 flex items-center justify-between gap-3">
             <button
-              onClick={decreaseComposer}
-              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
-              title={TEXT.composerSmaller}
-              aria-label={TEXT.composerSmaller}
+              onClick={handleCheerPrompt}
+              className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center gap-2"
+              title={TEXT.cheerPrompt}
+              aria-label={TEXT.cheerPrompt}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="5" y1="12" x2="19" y2="12" />
+                <path d="M12 3l2.6 5.3L20 9l-4 3.8.9 5.2L12 15.8 7.1 18l.9-5.2L4 9l5.4-.7L12 3z" />
               </svg>
+              <span className="text-sm leading-5">{TEXT.cheerPrompt}</span>
             </button>
-            <button
-              onClick={increaseComposer}
-              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
-              title={TEXT.composerLarger}
-              aria-label={TEXT.composerLarger}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={decreaseComposer}
+                className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+                title={TEXT.composerSmaller}
+                aria-label={TEXT.composerSmaller}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <button
+                onClick={increaseComposer}
+                className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+                title={TEXT.composerLarger}
+                aria-label={TEXT.composerLarger}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+            </div>
           </div>
           {imagePreview && (
             <div className="mb-2 relative inline-block">
@@ -367,6 +421,11 @@ export default function ChatArea({
           )}
 
           <div className="relative">
+            {cheerNotice && (
+              <div className="absolute right-2 bottom-[calc(100%+8px)] z-30 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--text-secondary)] shadow-md animate-fadeIn">
+                {TEXT.cheerPromptInserted}
+              </div>
+            )}
             {showAttachMenu && (
               <div className="absolute left-2 bottom-[54px] z-30 min-w-[176px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl">
                 <button
