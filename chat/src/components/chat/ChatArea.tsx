@@ -22,6 +22,7 @@ interface ChatAreaProps {
   onToggleSidebar: () => void;
   onRetry: () => void;
   onEditAndRegenerate?: (target: Message, text: string, imageData?: string) => Promise<void> | void;
+  onNotify?: (message: string, kind?: 'success' | 'error' | 'info') => void;
 }
 
 const TEXT = {
@@ -43,6 +44,8 @@ const TEXT = {
   cheerPromptInserted: '\u5fdc\u63f4\u30d7\u30ed\u30f3\u30d7\u30c8\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f',
   editingMode: '\u7de8\u96c6\u30e2\u30fc\u30c9\uff1a\u9001\u4fe1\u3067\u518d\u751f\u6210',
   cancelEdit: '\u7de8\u96c6\u3092\u3084\u3081\u308b',
+  copied: '\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f',
+  copyFailed: '\u30b3\u30d4\u30fc\u306b\u5931\u6557\u3057\u307e\u3057\u305f',
 };
 
 const COMPOSER_MIN_HEIGHT = 84;
@@ -71,6 +74,7 @@ export default function ChatArea({
   onToggleSidebar,
   onRetry,
   onEditAndRegenerate,
+  onNotify,
 }: ChatAreaProps) {
   const [inputText, setInputText] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -195,16 +199,18 @@ export default function ChatArea({
   const handleCopyUserMessage = async (msg: Message) => {
     try {
       await navigator.clipboard.writeText(msg.content_text || '');
+      onNotify?.(TEXT.copied, 'success');
     } catch {
-      // no-op
+      onNotify?.(TEXT.copyFailed, 'error');
     }
   };
 
   const handleCopyAssistantMessage = async (msg: Message) => {
     try {
       await navigator.clipboard.writeText(msg.content_text || '');
+      onNotify?.(TEXT.copied, 'success');
     } catch {
-      // no-op
+      onNotify?.(TEXT.copyFailed, 'error');
     }
   };
 

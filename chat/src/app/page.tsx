@@ -9,6 +9,14 @@ import type { ModelId, Message, Conversation } from '@/types';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatArea from '@/components/chat/ChatArea';
 
+type ToastKind = 'success' | 'error' | 'info';
+
+type ToastState = {
+  id: number;
+  message: string;
+  kind: ToastKind;
+};
+
 export default function Home() {
   const router = useRouter();
 
@@ -21,6 +29,7 @@ export default function Home() {
   const [currentConvTitle, setCurrentConvTitle] = useState<string | null>(null);
   const [showMessageModel, setShowMessageModel] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const { theme, setTheme } = useTheme();
 
   const { settings } = useSettings();
@@ -145,6 +154,16 @@ export default function Home() {
       setCurrentConvTitle(null);
     }
   }, [currentConvId, conversations]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  const notify = useCallback((message: string, kind: ToastKind = 'info') => {
+    setToast({ id: Date.now(), message, kind });
+  }, []);
 
   const handleNewChat = useCallback(() => {
     setCurrentConvId(null);
@@ -286,6 +305,7 @@ export default function Home() {
         onRename={(id, title) => updateConversation(id, { title } as Partial<Conversation>)}
         onPin={(id, pinned) => updateConversation(id, { pinned } as Partial<Conversation>)}
         onSearch={(q) => fetchConversations(q)}
+        onNotify={notify}
         onNavigate={(path) => {
           setIsNavigating(true);
           window.setTimeout(() => setIsNavigating(false), 2200);
@@ -309,6 +329,7 @@ export default function Home() {
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onRetry={handleRetry}
         onEditAndRegenerate={handleEditAndRegenerate}
+        onNotify={notify}
       />
 
       {isNavigating && (
@@ -316,6 +337,23 @@ export default function Home() {
           <div className="px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] flex items-center gap-3 shadow-xl">
             <span className="inline-block w-5 h-5 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin" />
             <span className="text-sm text-[var(--text-secondary)]">移動中...</span>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-6 z-[140] pointer-events-none">
+          <div
+            key={toast.id}
+            className={`px-4 py-2 rounded-xl border shadow-xl text-sm animate-fadeIn ${
+              toast.kind === 'success'
+                ? 'bg-[var(--surface)] border-[var(--accent)] text-[var(--text-primary)]'
+                : toast.kind === 'error'
+                  ? 'bg-[var(--surface)] border-[var(--danger)] text-[var(--text-primary)]'
+                  : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-primary)]'
+            }`}
+          >
+            {toast.message}
           </div>
         </div>
       )}
