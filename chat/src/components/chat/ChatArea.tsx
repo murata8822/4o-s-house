@@ -200,6 +200,14 @@ export default function ChatArea({
     }
   };
 
+  const handleCopyAssistantMessage = async (msg: Message) => {
+    try {
+      await navigator.clipboard.writeText(msg.content_text || '');
+    } catch {
+      // no-op
+    }
+  };
+
   const handleEditUserMessage = (msg: Message) => {
     setEditingTarget(msg);
     setInputText(msg.content_text || '');
@@ -369,6 +377,7 @@ export default function ChatArea({
               showTimestamp={timestampsEnabled}
               showModel={showMessageModel}
               onCopyUserMessage={handleCopyUserMessage}
+              onCopyAssistantMessage={handleCopyAssistantMessage}
               onEditUserMessage={handleEditUserMessage}
             />
           ))}

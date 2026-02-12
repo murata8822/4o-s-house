@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConversations, useMessages, useSettings, useStreaming } from '@/lib/hooks';
 import { useTheme } from '@/lib/theme';
-import { readShowMessageModel } from '@/lib/preferences';
+import { readShowMessageModel, readLastModel, writeLastModel } from '@/lib/preferences';
 import type { ModelId, Message, Conversation } from '@/types';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatArea from '@/components/chat/ChatArea';
@@ -20,6 +20,7 @@ export default function Home() {
   const [currentConvUpdatedAt, setCurrentConvUpdatedAt] = useState<string | null>(null);
   const [currentConvTitle, setCurrentConvTitle] = useState<string | null>(null);
   const [showMessageModel, setShowMessageModel] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { theme, setTheme } = useTheme();
 
   const { settings } = useSettings();
@@ -100,10 +101,19 @@ export default function Home() {
   );
 
   useEffect(() => {
+    const last = readLastModel();
+    if (last) {
+      setCurrentModel(last);
+      return;
+    }
     if (settings?.default_model) {
       setCurrentModel(settings.default_model);
     }
-  }, [settings]);
+  }, [settings?.default_model]);
+
+  useEffect(() => {
+    writeLastModel(currentModel);
+  }, [currentModel]);
 
   useEffect(() => {
     setShowMessageModel(readShowMessageModel());
@@ -256,7 +266,7 @@ export default function Home() {
   }, [messages, handleSend, setMessages]);
 
   return (
-    <div className="flex h-[100dvh] bg-[var(--bg)] text-[var(--text-primary)]">
+    <div className="relative flex h-[100dvh] bg-[var(--bg)] text-[var(--text-primary)]">
       <Sidebar
         conversations={conversations}
         currentId={currentConvId}
@@ -276,7 +286,11 @@ export default function Home() {
         onRename={(id, title) => updateConversation(id, { title } as Partial<Conversation>)}
         onPin={(id, pinned) => updateConversation(id, { pinned } as Partial<Conversation>)}
         onSearch={(q) => fetchConversations(q)}
-        onNavigate={(path) => router.push(path)}
+        onNavigate={(path) => {
+          setIsNavigating(true);
+          window.setTimeout(() => setIsNavigating(false), 2200);
+          router.push(path);
+        }}
       />
 
       <ChatArea
@@ -296,6 +310,15 @@ export default function Home() {
         onRetry={handleRetry}
         onEditAndRegenerate={handleEditAndRegenerate}
       />
+
+      {isNavigating && (
+        <div className="absolute inset-0 z-[120] bg-black/25 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+          <div className="px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] flex items-center gap-3 shadow-xl">
+            <span className="inline-block w-5 h-5 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin" />
+            <span className="text-sm text-[var(--text-secondary)]">移動中...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
