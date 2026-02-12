@@ -35,7 +35,70 @@ export default function Home() {
   const { isStreaming, startStream, stopStream } = useStreaming();
   const [memoryData, setMemoryData] = useState<{ markdown: string } | null>(null);
 
-  // Load settings defaults
+  const toApiMessage = useCallback((m: Message) => {
+    const imageData =
+      m.content_json && (m.content_json as Record<string, string>).imageData
+        ? (m.content_json as Record<string, string>).imageData
+        : undefined;
+    return {
+      role: m.role,
+      content: m.content_text,
+      imageData,
+    };
+  }, []);
+
+  const runAssistantStream = useCallback(
+    (
+      convId: string,
+      apiMessages: Array<{ role: string; content: string; imageData?: string }>,
+      imageData?: string
+    ) => {
+      setStreamingText('');
+
+      startStream(
+        {
+          conversationId: convId,
+          messages: apiMessages,
+          model: currentModel,
+          customInstructions: settings?.custom_instructions || '',
+          memoryMarkdown: memoryData?.markdown || '',
+          memoryEnabled: settings?.memory_injection_enabled ?? false,
+          imageData,
+        },
+        (delta) => {
+          setStreamingText((prev) => prev + delta);
+        },
+        () => {
+          fetch(`/api/conversations/${convId}`)
+            .then((r) => r.json())
+            .then((data) => {
+              setMessages(data.messages || []);
+            })
+            .catch(() => {});
+          fetchConversations();
+        },
+        (error) => {
+          setStreamingText('');
+          const errorMsg: Message = {
+            id: 'error-' + Date.now(),
+            conversation_id: convId,
+            user_id: '',
+            role: 'assistant',
+            content_text: `Error: ${error}`,
+            content_json: null,
+            model: currentModel,
+            created_at: new Date().toISOString(),
+            token_input: null,
+            token_output: null,
+            cost_usd: null,
+          };
+          setMessages((prev) => [...prev, errorMsg]);
+        }
+      );
+    },
+    [currentModel, settings, memoryData, startStream, setMessages, fetchConversations]
+  );
+
   useEffect(() => {
     if (settings?.default_model) {
       setCurrentModel(settings.default_model);
@@ -46,13 +109,11 @@ export default function Home() {
     setShowMessageModel(readShowMessageModel());
   }, []);
 
-  // Default sidebar state: open on desktop, closed on mobile.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setSidebarOpen(window.matchMedia('(min-width: 768px)').matches);
   }, []);
 
-  // Load memory
   useEffect(() => {
     fetch('/api/memory')
       .then((r) => r.json())
@@ -60,7 +121,6 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  // Load conversation details when selected
   useEffect(() => {
     if (currentConvId) {
       const conv = conversations.find((c) => c.id === currentConvId);
@@ -90,7 +150,6 @@ export default function Home() {
     async (text: string, imageData?: string) => {
       let convId = currentConvId;
 
-      // Create new conversation if needed
       if (!convId) {
         const title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
         const conv = await createConversation(title);
@@ -102,7 +161,6 @@ export default function Home() {
         setCurrentConvTitle(conv.title);
       }
 
-      // Save user message
       const userMsg = await addMessage(
         {
           content_text: text,
@@ -111,83 +169,70 @@ export default function Home() {
         },
         convId
       );
-
       if (!userMsg) return;
 
-      // Auto-generate title from first message
       if (messages.length === 0) {
         const title = text.slice(0, 30) + (text.length > 30 ? '...' : '');
         updateConversation(convId, { title });
         setCurrentConvTitle(title);
       }
 
-      // Build message history for API
       const apiMessages = [
-        ...messages.map((m: Message) => ({
-          role: m.role,
-          content: m.content_text,
-          imageData: m.content_json && (m.content_json as Record<string, string>).imageData
-            ? (m.content_json as Record<string, string>).imageData
-            : undefined,
-        })),
+        ...messages.map(toApiMessage),
         {
-          role: 'user' as const,
+          role: 'user',
           content: text,
           imageData,
         },
       ];
 
-      setStreamingText('');
-
-      startStream(
-        {
-          conversationId: convId,
-          messages: apiMessages,
-          model: currentModel,
-          customInstructions: settings?.custom_instructions || '',
-          memoryMarkdown: memoryData?.markdown || '',
-          memoryEnabled: settings?.memory_injection_enabled ?? false,
-          imageData,
-        },
-        // onDelta
-        (delta) => {
-          setStreamingText((prev) => prev + delta);
-        },
-        // onDone
-        () => {
-          // Re-fetch messages from DB. Keep streaming text until stream fully closes
-          // so we don't get a brief "disappear then reappear" flicker.
-          fetch(`/api/conversations/${convId}`)
-            .then((r) => r.json())
-            .then((data) => {
-              setMessages(data.messages || []);
-            })
-            .catch(() => {
-              // no-op: keep current streaming text; next send/new chat clears it
-            });
-          fetchConversations();
-        },
-        // onError
-        (error) => {
-          setStreamingText('');
-          const errorMsg: Message = {
-            id: 'error-' + Date.now(),
-            conversation_id: convId!,
-            user_id: '',
-            role: 'assistant',
-            content_text: `エラーが発生しました: ${error}`,
-            content_json: null,
-            model: currentModel,
-            created_at: new Date().toISOString(),
-            token_input: null,
-            token_output: null,
-            cost_usd: null,
-          };
-          setMessages((prev) => [...prev, errorMsg]);
-        }
-      );
+      runAssistantStream(convId, apiMessages, imageData);
     },
-    [currentConvId, currentModel, messages, settings, memoryData, createConversation, addMessage, startStream, setMessages, fetchConversations, updateConversation]
+    [currentConvId, messages, createConversation, addMessage, updateConversation, toApiMessage, runAssistantStream]
+  );
+
+  const handleEditAndRegenerate = useCallback(
+    async (target: Message, text: string, imageData?: string) => {
+      if (!currentConvId || target.role !== 'user') return;
+      if (isStreaming) return;
+
+      const nextText = text.trim();
+      if (!nextText && !imageData) return;
+
+      const patchRes = await fetch(`/api/conversations/${currentConvId}/messages/${target.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content_text: nextText,
+          content_json: imageData ? { imageData } : null,
+        }),
+      });
+      if (!patchRes.ok) return;
+
+      const trimRes = await fetch(`/api/conversations/${currentConvId}/messages`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ afterMessageId: target.id }),
+      });
+      if (!trimRes.ok) return;
+
+      const convRes = await fetch(`/api/conversations/${currentConvId}`);
+      if (!convRes.ok) return;
+      const data = await convRes.json();
+      const baseMessages: Message[] = data.messages || [];
+      setMessages(baseMessages);
+
+      const firstUser = baseMessages.find((m) => m.role === 'user');
+      if (firstUser?.id === target.id) {
+        const title = nextText.slice(0, 30) + (nextText.length > 30 ? '...' : '');
+        updateConversation(currentConvId, { title });
+        setCurrentConvTitle(title);
+      }
+
+      runAssistantStream(currentConvId, baseMessages.map(toApiMessage), imageData);
+      fetchConversations();
+    },
+    [currentConvId, isStreaming, setMessages, updateConversation, runAssistantStream, toApiMessage, fetchConversations]
   );
 
   const handleRetry = useCallback(() => {
@@ -249,6 +294,7 @@ export default function Home() {
         onModelChange={setCurrentModel}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onRetry={handleRetry}
+        onEditAndRegenerate={handleEditAndRegenerate}
       />
     </div>
   );
