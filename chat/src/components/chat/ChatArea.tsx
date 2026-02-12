@@ -76,11 +76,13 @@ export default function ChatArea({
   const [composerHeight, setComposerHeight] = useState(108);
   const [cheerNotice, setCheerNotice] = useState(false);
   const [lastCheerIndex, setLastCheerIndex] = useState<number | null>(null);
+  const [inputOverlayHeight, setInputOverlayHeight] = useState(192);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const speechRef = useRef<{ stop: () => void } | null>(null);
   const cheerTimerRef = useRef<number | null>(null);
+  const inputAreaRef = useRef<HTMLDivElement>(null);
 
   const formatMetaDate = (iso: string) =>
     new Date(iso).toLocaleString('ja-JP', {
@@ -103,6 +105,25 @@ export default function ChatArea({
   useEffect(() => {
     window.localStorage.setItem('chat.composer.height', String(composerHeight));
   }, [composerHeight]);
+
+  useEffect(() => {
+    const node = inputAreaRef.current;
+    if (!node) return;
+
+    const measure = () => {
+      setInputOverlayHeight(node.getBoundingClientRect().height);
+    };
+    measure();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(measure);
+      observer.observe(node);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [composerHeight, imagePreview, isStreaming, messages.length, showAttachMenu, cheerNotice]);
 
   useEffect(() => {
     return () => {
@@ -304,7 +325,10 @@ export default function ChatArea({
         />
       )}
 
-      <div className="flex-1 overflow-y-auto px-8 md:px-10 pt-7 pb-44">
+      <div
+        className="flex-1 overflow-y-auto px-8 md:px-10 pt-7"
+        style={{ paddingBottom: `${Math.max(inputOverlayHeight + 24, 160)}px` }}
+      >
         {!hasMessages && (
           <div className="h-full flex flex-col items-center justify-center text-[var(--text-secondary)] -translate-y-[-10px]">
             <div className="w-16 h-16 bg-[var(--accent)] rounded-2xl flex items-center justify-center text-white text-2xl font-semibold mb-4">
@@ -348,7 +372,10 @@ export default function ChatArea({
         </div>
       </div>
 
-      <div className="input-area absolute inset-x-0 bottom-0 px-8 md:px-10 pb-4 pt-4 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/95 to-transparent pointer-events-none">
+      <div
+        ref={inputAreaRef}
+        className="input-area absolute inset-x-0 bottom-0 px-8 md:px-10 pb-4 pt-4 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/95 to-transparent pointer-events-none"
+      >
         <div className="max-w-5xl mx-auto pointer-events-auto">
           <div className="mb-2 flex items-center justify-between gap-3">
             <button

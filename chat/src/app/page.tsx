@@ -155,15 +155,15 @@ export default function Home() {
         },
         // onDone
         () => {
-          // Re-fetch messages from DB, then clear streaming text to avoid UI flicker.
+          // Re-fetch messages from DB. Keep streaming text until stream fully closes
+          // so we don't get a brief "disappear then reappear" flicker.
           fetch(`/api/conversations/${convId}`)
             .then((r) => r.json())
             .then((data) => {
               setMessages(data.messages || []);
-              setStreamingText('');
             })
             .catch(() => {
-              setStreamingText('');
+              // no-op: keep current streaming text; next send/new chat clears it
             });
           fetchConversations();
         },
