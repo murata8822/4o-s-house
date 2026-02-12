@@ -8,6 +8,7 @@ import ModelPicker from './ModelPicker';
 
 interface ChatAreaProps {
   messages: Message[];
+  conversationDisplayId?: string | null;
   conversationTitle: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -66,6 +67,7 @@ const CHEER_PROMPTS = [
 
 export default function ChatArea({
   messages,
+  conversationDisplayId,
   conversationTitle,
   createdAt,
   updatedAt,
@@ -224,7 +226,7 @@ export default function ChatArea({
 
   const handleCopyConversation = async () => {
     const fullText = messages
-      .map((m) => `${m.role === 'user' ? 'あなた' : '4o'}:\n${m.content_text || ''}`)
+      .map((m) => `${m.role === 'user' ? 'User' : '4o'}:\n${m.content_text || ''}`)
       .join('\n\n');
 
     if (!fullText.trim()) return;
@@ -356,7 +358,10 @@ export default function ChatArea({
             title={TEXT.copyConversation}
             aria-label={TEXT.copyConversation}
           >
-            ⧉
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
           </button>
           <button
             onClick={onToggleCostDetails}
@@ -369,6 +374,11 @@ export default function ChatArea({
           {conversationTitle && (
             <div className="text-base leading-6 text-[var(--text-secondary)] truncate max-w-[360px] text-right">
               {conversationTitle}
+            </div>
+          )}
+          {conversationDisplayId && (
+            <div className="text-[11px] leading-4 text-[var(--text-muted)] font-mono whitespace-nowrap">
+              #{conversationDisplayId}
             </div>
           )}
           {(createdAt || updatedAt) && (

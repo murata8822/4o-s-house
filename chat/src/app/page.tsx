@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConversations, useMessages, useSettings, useStreaming } from '@/lib/hooks';
 import { useTheme } from '@/lib/theme';
@@ -163,6 +163,17 @@ export default function Home() {
     }
   }, [currentConvId, conversations]);
 
+  const conversationDisplayIds = useMemo(() => {
+    const asc = [...conversations].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+    const map: Record<string, string> = {};
+    asc.forEach((c, idx) => {
+      map[c.id] = String(idx + 1).padStart(5, '0');
+    });
+    return map;
+  }, [conversations]);
+
+  const currentConvDisplayId = currentConvId ? (conversationDisplayIds[currentConvId] ?? null) : null;
+
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 2200);
@@ -177,7 +188,7 @@ export default function Home() {
     setShowCostDetails((prev) => {
       const next = !prev;
       writeShowCostDetails(next);
-      notify(next ? '料金表示をONにしました' : '料金表示をOFFにしました', 'info');
+      notify(next ? 'Cost details ON' : 'Cost details OFF', 'info');
       return next;
     });
   }, [notify]);
@@ -305,6 +316,7 @@ export default function Home() {
     <div className="relative flex h-[100dvh] bg-[var(--bg)] text-[var(--text-primary)]">
       <Sidebar
         conversations={conversations}
+        conversationDisplayIds={conversationDisplayIds}
         currentId={currentConvId}
         isOpen={sidebarOpen}
         isLoading={conversationsLoading}
@@ -332,6 +344,7 @@ export default function Home() {
 
       <ChatArea
         messages={messages}
+        conversationDisplayId={currentConvDisplayId}
         conversationTitle={currentConvTitle}
         createdAt={currentConvStartedAt}
         updatedAt={currentConvUpdatedAt}
@@ -355,7 +368,7 @@ export default function Home() {
         <div className="absolute inset-0 z-[120] bg-black/25 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
           <div className="px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] flex items-center gap-3 shadow-xl">
             <span className="inline-block w-5 h-5 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin" />
-            <span className="text-sm text-[var(--text-secondary)]">移動中...</span>
+            <span className="text-sm text-[var(--text-secondary)]">Loading...</span>
           </div>
         </div>
       )}

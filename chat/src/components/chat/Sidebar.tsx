@@ -7,6 +7,7 @@ import type { AppTheme } from '@/lib/theme';
 
 interface SidebarProps {
   conversations: Conversation[];
+  conversationDisplayIds: Record<string, string>;
   currentId: string | null;
   isOpen: boolean;
   isLoading: boolean;
@@ -72,6 +73,7 @@ type SortMode = 'favorite' | 'updated_desc' | 'updated_asc' | 'title_asc' | 'tit
 
 export default function Sidebar({
   conversations,
+  conversationDisplayIds,
   currentId,
   isOpen,
   isLoading,
@@ -92,6 +94,7 @@ export default function Sidebar({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('favorite');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [searchJumpIndex, setSearchJumpIndex] = useState(0);
   const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -140,13 +143,18 @@ export default function Sidebar({
     }
   }, [conversations, sortMode]);
 
+  const visibleConversations = useMemo(() => {
+    if (!favoritesOnly) return sortedConversations;
+    return sortedConversations.filter((c) => Boolean(c.pinned));
+  }, [favoritesOnly, sortedConversations]);
+
   const lowerQuery = searchQuery.trim().toLowerCase();
   const matchedIds = useMemo(() => {
     if (!lowerQuery) return [];
-    return sortedConversations
+    return visibleConversations
       .filter((c) => c.title.toLowerCase().includes(lowerQuery))
       .map((c) => c.id);
-  }, [sortedConversations, lowerQuery]);
+  }, [visibleConversations, lowerQuery]);
   const safeJumpIndex =
     matchedIds.length === 0 ? 0 : ((searchJumpIndex % matchedIds.length) + matchedIds.length) % matchedIds.length;
 
@@ -259,20 +267,39 @@ export default function Sidebar({
             <button
               onClick={() => jumpToResult(-1)}
               disabled={matchedIds.length === 0}
-              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               aria-label={TEXT.searchPrev}
               title={TEXT.searchPrev}
             >
-              ↑
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
             <button
               onClick={() => jumpToResult(1)}
               disabled={matchedIds.length === 0}
-              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               aria-label={TEXT.searchNext}
               title={TEXT.searchNext}
             >
-              ↓
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setFavoritesOnly((prev) => !prev)}
+              className={`w-10 h-10 rounded-lg border transition-colors flex items-center justify-center ${
+                favoritesOnly
+                  ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--surface)]'
+                  : 'border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)]'
+              }`}
+              title="Favorites only"
+              aria-label="Favorites only"
+              aria-pressed={favoritesOnly}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={favoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <polygon points="12 2 15.1 8.3 22 9.3 17 14.2 18.2 21 12 17.7 5.8 21 7 14.2 2 9.3 8.9 8.3 12 2" />
+              </svg>
             </button>
           </div>
           {lowerQuery && (
@@ -312,13 +339,13 @@ export default function Sidebar({
             </div>
           )}
 
-          {!isLoading && sortedConversations.length === 0 && (
+          {!isLoading && visibleConversations.length === 0 && (
             <div className="text-center text-[var(--text-secondary)] text-sm py-8">
               {searchQuery ? TEXT.notFound : TEXT.noChats}
             </div>
           )}
 
-          {sortedConversations.map((conv) => {
+          {visibleConversations.map((conv) => {
             const active = conv.id === currentId;
             const isRenaming = renamingId === conv.id;
             const isJumpTarget = matchedIds.length > 0 && matchedIds[safeJumpIndex] === conv.id;
@@ -392,7 +419,12 @@ export default function Sidebar({
                     </div>
                   ) : (
                     <>
-                      <div className="text-[16px] leading-6 truncate">{highlightedTitle(conv.title)}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[11px] leading-5 text-[var(--text-muted)] font-mono flex-shrink-0">
+                          #{conversationDisplayIds[conv.id] ?? '-----'}
+                        </span>
+                        <div className="text-[16px] leading-6 truncate">{highlightedTitle(conv.title)}</div>
+                      </div>
                       <div className="text-[14px] leading-5 text-[var(--text-muted)] mt-0.5">
                         {formatRelativeTime(conv.updated_at)}
                       </div>
