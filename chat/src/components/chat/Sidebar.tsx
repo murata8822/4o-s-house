@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Conversation } from '@/types';
 import { formatRelativeTime } from '@/lib/hooks';
 import type { AppTheme } from '@/lib/theme';
@@ -20,31 +20,46 @@ interface SidebarProps {
   onPin: (id: string, pinned: boolean) => void;
   onSearch: (query: string) => void;
   onNavigate: (path: string) => void;
+  onNotify?: (message: string, kind?: 'success' | 'error' | 'info') => void;
 }
 
 const TEXT = {
-  menu: '\u30e1\u30cb\u30e5\u30fc',
-  closeSidebar: '\u30b5\u30a4\u30c9\u30d0\u30fc\u3092\u9589\u3058\u308b',
-  newChat: '\u65b0\u3057\u3044\u30c1\u30e3\u30c3\u30c8',
-  searchChat: '\u30c1\u30e3\u30c3\u30c8\u3092\u691c\u7d22',
-  album: '\u30a2\u30eb\u30d0\u30e0\uff08\u672a\u5b9f\u88c5\uff09',
-  history: '\u30c1\u30e3\u30c3\u30c8\u5c65\u6b74',
-  loading: '\u8aad\u307f\u8fbc\u307f\u4e2d...',
-  notFound: '\u898b\u3064\u304b\u308a\u307e\u305b\u3093',
-  noChats: '\u30c1\u30e3\u30c3\u30c8\u304c\u3042\u308a\u307e\u305b\u3093',
-  unpin: '\u30d4\u30f3\u3092\u5916\u3059',
-  pin: '\u30d4\u30f3\u7559\u3081',
-  confirmDelete: '\u672c\u5f53\u306b\u524a\u9664',
-  cancel: '\u30ad\u30e3\u30f3\u30bb\u30eb',
-  rename: '\u540d\u524d\u5909\u66f4',
-  delete: '\u524a\u9664',
-  deleteTitle: '\u30c1\u30e3\u30c3\u30c8\u3092\u524a\u9664',
-  deleteMessage: '\u3053\u306e\u30c1\u30e3\u30c3\u30c8\u3068\u30e1\u30c3\u30bb\u30fc\u30b8\u3092\u524a\u9664\u3057\u307e\u3059\u3002\u3053\u306e\u64cd\u4f5c\u306f\u53d6\u308a\u6d88\u305b\u307e\u305b\u3093\u3002',
-  settings: '\u8a2d\u5b9a',
-  theme: '\u8868\u793a\u30c6\u30fc\u30de',
-  dark: '\u30c0\u30fc\u30af',
-  light: '\u30e9\u30a4\u30c8',
-  contrast: '\u9ad8\u30b3\u30f3\u30c8\u30e9\u30b9\u30c8',
+  menu: 'メニュー',
+  closeSidebar: 'サイドバーを閉じる',
+  newChat: '新しいチャット',
+  searchChat: 'チャットを検索',
+  album: 'アルバム（未実装）',
+  history: 'チャット履歴',
+  loading: '読み込み中...',
+  notFound: '見つかりません',
+  noChats: 'チャットがありません',
+  unpin: 'お気に入りから外す',
+  pin: 'お気に入りに追加',
+  confirmDelete: '本当に削除',
+  confirm: '保存',
+  cancel: 'キャンセル',
+  rename: '名前変更',
+  delete: '削除',
+  deleteTitle: 'チャットを削除',
+  deleteMessage: 'このチャットとメッセージを削除します。この操作は取り消せません。',
+  settings: '設定',
+  theme: '表示テーマ',
+  dark: 'ダーク',
+  light: 'ライト',
+  contrast: '高コントラスト',
+  sort: '並び替え',
+  sortUpdatedDesc: '更新が新しい順',
+  sortUpdatedAsc: '更新が古い順',
+  sortTitleAsc: 'タイトル A-Z',
+  sortTitleDesc: 'タイトル Z-A',
+  sortFavorite: 'お気に入り優先',
+  searchPrev: '前の結果',
+  searchNext: '次の結果',
+  searchResult: '件',
+  addedFavorite: 'お気に入りに追加しました',
+  removedFavorite: 'お気に入りから外しました',
+  renamed: 'タイトルを更新しました',
+  deleted: 'チャットを削除しました',
 };
 
 const themeItems: Array<{ id: AppTheme; label: string }> = [
@@ -52,6 +67,8 @@ const themeItems: Array<{ id: AppTheme; label: string }> = [
   { id: 'light', label: TEXT.light },
   { id: 'contrast', label: TEXT.contrast },
 ];
+
+type SortMode = 'favorite' | 'updated_desc' | 'updated_asc' | 'title_asc' | 'title_desc';
 
 export default function Sidebar({
   conversations,
@@ -68,14 +85,19 @@ export default function Sidebar({
   onPin,
   onSearch,
   onNavigate,
+  onNotify,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
+  const [sortMode, setSortMode] = useState<SortMode>('favorite');
+  const [searchJumpIndex, setSearchJumpIndex] = useState(0);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    setSearchJumpIndex(0);
     onSearch(query);
   };
 
@@ -93,8 +115,66 @@ export default function Sidebar({
     const next = renameDraft.trim();
     if (next && next !== conv.title) {
       onRename(conv.id, next);
+      onNotify?.(TEXT.renamed, 'success');
     }
     cancelRename();
+  };
+
+  const sortedConversations = useMemo(() => {
+    const list = [...conversations];
+    switch (sortMode) {
+      case 'updated_asc':
+        return list.sort((a, b) => +new Date(a.updated_at) - +new Date(b.updated_at));
+      case 'title_asc':
+        return list.sort((a, b) => a.title.localeCompare(b.title, 'ja'));
+      case 'title_desc':
+        return list.sort((a, b) => b.title.localeCompare(a.title, 'ja'));
+      case 'updated_desc':
+        return list.sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at));
+      case 'favorite':
+      default:
+        return list.sort((a, b) => {
+          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+          return +new Date(b.updated_at) - +new Date(a.updated_at);
+        });
+    }
+  }, [conversations, sortMode]);
+
+  const lowerQuery = searchQuery.trim().toLowerCase();
+  const matchedIds = useMemo(() => {
+    if (!lowerQuery) return [];
+    return sortedConversations
+      .filter((c) => c.title.toLowerCase().includes(lowerQuery))
+      .map((c) => c.id);
+  }, [sortedConversations, lowerQuery]);
+  const safeJumpIndex =
+    matchedIds.length === 0 ? 0 : ((searchJumpIndex % matchedIds.length) + matchedIds.length) % matchedIds.length;
+
+  const highlightedTitle = (title: string) => {
+    if (!lowerQuery) return title;
+    const lowerTitle = title.toLowerCase();
+    const index = lowerTitle.indexOf(lowerQuery);
+    if (index < 0) return title;
+    const end = index + lowerQuery.length;
+
+    return (
+      <>
+        {title.slice(0, index)}
+        <mark className="bg-[var(--accent)]/25 text-[var(--text-primary)] rounded px-0.5">
+          {title.slice(index, end)}
+        </mark>
+        {title.slice(end)}
+      </>
+    );
+  };
+
+  const jumpToResult = (delta: number) => {
+    if (matchedIds.length === 0) return;
+    const next = ((safeJumpIndex + delta) % matchedIds.length + matchedIds.length) % matchedIds.length;
+    setSearchJumpIndex(next);
+    const id = matchedIds[next];
+    onSelect(id);
+    rowRefs.current[id]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   };
 
   return (
@@ -142,7 +222,7 @@ export default function Sidebar({
         </div>
 
         <div className="px-6 pb-4">
-          <div className="relative">
+          <div className="relative mb-2">
             <svg
               width="16"
               height="16"
@@ -163,6 +243,43 @@ export default function Sidebar({
               className="w-full h-[50px] bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-11 pr-4 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] transition-colors"
             />
           </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              className="flex-1 h-10 bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              aria-label={TEXT.sort}
+            >
+              <option value="favorite">{TEXT.sortFavorite}</option>
+              <option value="updated_desc">{TEXT.sortUpdatedDesc}</option>
+              <option value="updated_asc">{TEXT.sortUpdatedAsc}</option>
+              <option value="title_asc">{TEXT.sortTitleAsc}</option>
+              <option value="title_desc">{TEXT.sortTitleDesc}</option>
+            </select>
+            <button
+              onClick={() => jumpToResult(-1)}
+              disabled={matchedIds.length === 0}
+              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label={TEXT.searchPrev}
+              title={TEXT.searchPrev}
+            >
+              ↑
+            </button>
+            <button
+              onClick={() => jumpToResult(1)}
+              disabled={matchedIds.length === 0}
+              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              aria-label={TEXT.searchNext}
+              title={TEXT.searchNext}
+            >
+              ↓
+            </button>
+          </div>
+          {lowerQuery && (
+            <div className="pt-2 text-xs text-[var(--text-muted)]">
+              {matchedIds.length === 0 ? TEXT.notFound : `${safeJumpIndex + 1}/${matchedIds.length} ${TEXT.searchResult}`}
+            </div>
+          )}
         </div>
 
         <div className="px-6 pb-3">
@@ -195,18 +312,23 @@ export default function Sidebar({
             </div>
           )}
 
-          {!isLoading && conversations.length === 0 && (
+          {!isLoading && sortedConversations.length === 0 && (
             <div className="text-center text-[var(--text-secondary)] text-sm py-8">
               {searchQuery ? TEXT.notFound : TEXT.noChats}
             </div>
           )}
 
-          {conversations.map((conv) => {
+          {sortedConversations.map((conv) => {
             const active = conv.id === currentId;
             const isRenaming = renamingId === conv.id;
+            const isJumpTarget = matchedIds.length > 0 && matchedIds[safeJumpIndex] === conv.id;
+
             return (
               <div
                 key={conv.id}
+                ref={(el) => {
+                  rowRefs.current[conv.id] = el;
+                }}
                 onClick={() => {
                   if (isRenaming) return;
                   onSelect(conv.id);
@@ -216,14 +338,14 @@ export default function Sidebar({
                   active
                     ? 'bg-[var(--surface)] text-[var(--text-primary)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]'
-                }`}
+                } ${isJumpTarget ? 'ring-1 ring-[var(--accent)]/70' : ''}`}
               >
                 {active && <span className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-[var(--accent)]" />}
 
                 {conv.pinned && (
                   <span className="text-[var(--accent)] text-xs flex-shrink-0">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
+                      <polygon points="12 2 15.1 8.3 22 9.3 17 14.2 18.2 21 12 17.7 5.8 21 7 14.2 2 9.3 8.9 8.3 12 2" />
                     </svg>
                   </span>
                 )}
@@ -255,7 +377,7 @@ export default function Sidebar({
                           }}
                           className="px-2.5 py-1 text-xs rounded-md bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text-primary)]"
                         >
-                          保存
+                          {TEXT.confirm}
                         </button>
                         <button
                           onClick={(e) => {
@@ -270,7 +392,7 @@ export default function Sidebar({
                     </div>
                   ) : (
                     <>
-                      <div className="text-[16px] leading-6 truncate">{conv.title}</div>
+                      <div className="text-[16px] leading-6 truncate">{highlightedTitle(conv.title)}</div>
                       <div className="text-[14px] leading-5 text-[var(--text-muted)] mt-0.5">
                         {formatRelativeTime(conv.updated_at)}
                       </div>
@@ -282,7 +404,9 @@ export default function Sidebar({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onPin(conv.id, !conv.pinned);
+                      const next = !conv.pinned;
+                      onPin(conv.id, next);
+                      onNotify?.(next ? TEXT.addedFavorite : TEXT.removedFavorite, 'success');
                     }}
                     className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
                       conv.pinned
@@ -299,7 +423,7 @@ export default function Sidebar({
                       stroke="currentColor"
                       strokeWidth="2"
                     >
-                      <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
+                      <polygon points="12 2 15.1 8.3 22 9.3 17 14.2 18.2 21 12 17.7 5.8 21 7 14.2 2 9.3 8.9 8.3 12 2" />
                     </svg>
                   </button>
                   <button
@@ -391,6 +515,7 @@ export default function Sidebar({
               <button
                 onClick={() => {
                   onDelete(deleteTarget.id);
+                  onNotify?.(TEXT.deleted, 'success');
                   setDeleteTarget(null);
                 }}
                 className="px-4 py-2 rounded-lg bg-[var(--danger)] text-white hover:brightness-95 transition-colors"

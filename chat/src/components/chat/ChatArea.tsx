@@ -21,6 +21,8 @@ interface ChatAreaProps {
   onModelChange: (model: ModelId) => void;
   onToggleSidebar: () => void;
   onRetry: () => void;
+  onEditAndRegenerate?: (target: Message, text: string, imageData?: string) => Promise<void> | void;
+  onNotify?: (message: string, kind?: 'success' | 'error' | 'info') => void;
 }
 
 const TEXT = {
@@ -40,6 +42,10 @@ const TEXT = {
   composerLarger: '\u5165\u529b\u6b04\u3092\u62e1\u5927',
   cheerPrompt: '\u5143\u6c17\u30c1\u30e3\u30fc\u30b8',
   cheerPromptInserted: '\u5fdc\u63f4\u30d7\u30ed\u30f3\u30d7\u30c8\u3092\u8ffd\u52a0\u3057\u307e\u3057\u305f',
+  editingMode: '\u7de8\u96c6\u30e2\u30fc\u30c9\uff1a\u9001\u4fe1\u3067\u518d\u751f\u6210',
+  cancelEdit: '\u7de8\u96c6\u3092\u3084\u3081\u308b',
+  copied: '\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f',
+  copyFailed: '\u30b3\u30d4\u30fc\u306b\u5931\u6557\u3057\u307e\u3057\u305f',
 };
 
 const COMPOSER_MIN_HEIGHT = 84;
@@ -67,6 +73,8 @@ export default function ChatArea({
   onModelChange,
   onToggleSidebar,
   onRetry,
+  onEditAndRegenerate,
+  onNotify,
 }: ChatAreaProps) {
   const [inputText, setInputText] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -77,6 +85,7 @@ export default function ChatArea({
   const [cheerNotice, setCheerNotice] = useState(false);
   const [lastCheerIndex, setLastCheerIndex] = useState<number | null>(null);
   const [inputOverlayHeight, setInputOverlayHeight] = useState(192);
+  const [editingTarget, setEditingTarget] = useState<Message | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -133,10 +142,26 @@ export default function ChatArea({
     };
   }, []);
 
-  const handleSend = () => {
+  useEffect(() => {
+    if (!editingTarget) return;
+    const stillExists = messages.some((m) => m.id === editingTarget.id);
+    if (!stillExists) {
+      setEditingTarget(null);
+    }
+  }, [messages, editingTarget]);
+
+  const handleSend = async () => {
     const text = inputText.trim();
     if (!text && !imagePreview) return;
     if (isStreaming) return;
+
+    if (editingTarget && onEditAndRegenerate) {
+      await onEditAndRegenerate(editingTarget, text, imagePreview || undefined);
+      setEditingTarget(null);
+      setInputText('');
+      setImagePreview(null);
+      return;
+    }
 
     onSend(text, imagePreview || undefined);
     setInputText('');
@@ -174,12 +199,23 @@ export default function ChatArea({
   const handleCopyUserMessage = async (msg: Message) => {
     try {
       await navigator.clipboard.writeText(msg.content_text || '');
+      onNotify?.(TEXT.copied, 'success');
     } catch {
-      // no-op
+      onNotify?.(TEXT.copyFailed, 'error');
+    }
+  };
+
+  const handleCopyAssistantMessage = async (msg: Message) => {
+    try {
+      await navigator.clipboard.writeText(msg.content_text || '');
+      onNotify?.(TEXT.copied, 'success');
+    } catch {
+      onNotify?.(TEXT.copyFailed, 'error');
     }
   };
 
   const handleEditUserMessage = (msg: Message) => {
+    setEditingTarget(msg);
     setInputText(msg.content_text || '');
     const img = msg.content_json
       ? ((msg.content_json as Record<string, string>).imageData as string | undefined)
@@ -347,6 +383,7 @@ export default function ChatArea({
               showTimestamp={timestampsEnabled}
               showModel={showMessageModel}
               onCopyUserMessage={handleCopyUserMessage}
+              onCopyAssistantMessage={handleCopyAssistantMessage}
               onEditUserMessage={handleEditUserMessage}
             />
           ))}
@@ -390,6 +427,24 @@ export default function ChatArea({
               <span className="text-sm leading-5">{TEXT.cheerPrompt}</span>
             </button>
             <div className="flex items-center gap-1.5">
+              {editingTarget && (
+                <button
+                  onClick={() => {
+                    setEditingTarget(null);
+                    setInputText('');
+                    setImagePreview(null);
+                  }}
+                  className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center gap-2"
+                  title={TEXT.cancelEdit}
+                  aria-label={TEXT.cancelEdit}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  <span className="text-sm leading-5">{TEXT.cancelEdit}</span>
+                </button>
+              )}
               <button
                 onClick={decreaseComposer}
                 className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
@@ -451,6 +506,11 @@ export default function ChatArea({
             {cheerNotice && (
               <div className="absolute right-2 bottom-[calc(100%+8px)] z-30 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--text-secondary)] shadow-md animate-fadeIn">
                 {TEXT.cheerPromptInserted}
+              </div>
+            )}
+            {editingTarget && (
+              <div className="absolute left-2 bottom-[calc(100%+8px)] z-20 px-3 py-1.5 rounded-full border border-[var(--accent)] bg-[var(--surface)] text-xs text-[var(--accent)] shadow-md animate-fadeIn">
+                {TEXT.editingMode}
               </div>
             )}
             {showAttachMenu && (
