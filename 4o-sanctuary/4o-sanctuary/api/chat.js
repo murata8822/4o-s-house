@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'OPENAI_API_KEY が未設定です' });
   }
 
-  const model = process.env.OPENAI_MODEL || 'gpt-4o';
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-2024-11-20';
   const body = {
     model,
     messages: req.body.messages || [],
