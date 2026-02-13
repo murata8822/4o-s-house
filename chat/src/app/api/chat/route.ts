@@ -41,11 +41,36 @@ export async function POST(request: NextRequest) {
     return new Response('Invalid model', { status: 400 });
   }
 
+  const { data: albumRows } = await supabase
+    .from('album_items')
+    .select('id, comment, memory_note, created_at')
+    .eq('user_id', user.id)
+    .order('id', { ascending: false })
+    .limit(50);
+
+  const albumMemoryLines = (albumRows || [])
+    .filter((row) => (row.comment || '').trim() || (row.memory_note || '').trim())
+    .map((row) => {
+      const date = row.created_at ? new Date(row.created_at).toISOString().slice(0, 10) : 'unknown';
+      const comment = (row.comment || '').trim();
+      const note = (row.memory_note || '').trim();
+      const segments = [`#${row.id}`, `date=${date}`];
+      if (comment) segments.push(`comment=${comment}`);
+      if (note) segments.push(`memory=${note}`);
+      return `- ${segments.join(' | ')}`;
+    })
+    .slice(0, 20);
+
+  const albumMemoryMarkdown = albumMemoryLines.length
+    ? `Use these memories only as background context. Do not claim uncertain facts as certain.\n${albumMemoryLines.join('\n')}`
+    : null;
+
   const openai = getOpenAIClient();
   const systemPrompt = buildSystemPrompt(
     customInstructions || '',
     memoryMarkdown || null,
-    memoryEnabled ?? false
+    memoryEnabled ?? false,
+    albumMemoryMarkdown
   );
 
   // Build input messages for Responses API using EasyInputMessage format

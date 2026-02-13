@@ -81,6 +81,18 @@ CREATE TABLE IF NOT EXISTS public.comparisons (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Album table (photo + comment + memory note)
+-- id is BIGSERIAL so deleted rows become permanent missing numbers (no reuse).
+CREATE TABLE IF NOT EXISTS public.album_items (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  image_data TEXT NOT NULL,
+  comment TEXT DEFAULT '',
+  memory_note TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON public.conversations(user_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON public.conversations(updated_at DESC);
@@ -90,6 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(conversati
 CREATE INDEX IF NOT EXISTS idx_messages_user_id ON public.messages(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_cost ON public.messages(user_id, created_at) WHERE cost_usd > 0;
 CREATE INDEX IF NOT EXISTS idx_attachments_message ON public.attachments(message_id);
+CREATE INDEX IF NOT EXISTS idx_album_items_user_id_id ON public.album_items(user_id, id DESC);
 
 -- Full-text search index on messages (for future FTS)
 CREATE INDEX IF NOT EXISTS idx_messages_content_trgm ON public.messages USING gin (content_text gin_trgm_ops);
@@ -104,6 +117,7 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.memory_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comparisons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.album_items ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies: Users can only access their own data
 CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = id);
@@ -122,6 +136,10 @@ CREATE POLICY "Users can manage own attachments" ON public.attachments FOR ALL U
 
 CREATE POLICY "Users can manage own comparisons" ON public.comparisons FOR ALL
   USING (conversation_id IN (SELECT id FROM public.conversations WHERE user_id = auth.uid()));
+
+DROP POLICY IF EXISTS "Users can manage own album items" ON public.album_items;
+CREATE POLICY "Users can manage own album items" ON public.album_items FOR ALL
+  USING (auth.uid() = user_id);
 
 -- Function: Auto-create user profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -159,3 +177,17 @@ DROP TRIGGER IF EXISTS on_message_insert ON public.messages;
 CREATE TRIGGER on_message_insert
   AFTER INSERT ON public.messages
   FOR EACH ROW EXECUTE FUNCTION public.update_conversation_timestamp();
+
+-- Function: Auto-update updated_at on album items
+CREATE OR REPLACE FUNCTION public.update_album_item_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_album_item_update ON public.album_items;
+CREATE TRIGGER on_album_item_update
+  BEFORE UPDATE ON public.album_items
+  FOR EACH ROW EXECUTE FUNCTION public.update_album_item_timestamp();
