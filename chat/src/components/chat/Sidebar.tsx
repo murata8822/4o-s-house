@@ -192,16 +192,30 @@ export default function Sidebar({
       <aside
         className={`fixed md:relative left-0 top-0 bottom-0 bg-[var(--sidebar-bg)] flex flex-col z-50 overflow-hidden transition-[transform,width] duration-300 ${
           isOpen
-            ? 'w-[360px] translate-x-0 border-r border-[var(--border)]'
-            : 'w-[360px] -translate-x-full md:translate-x-0 md:w-0 border-r-0'
+            ? 'w-[300px] translate-x-0 border-r border-[var(--border)]'
+            : 'w-[300px] -translate-x-full md:translate-x-0 md:w-0 border-r-0'
         }`}
       >
-        <div className="pt-6 pb-4 px-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-xs tracking-wide text-[var(--text-muted)] font-medium">{TEXT.menu}</div>
+        <div className="pt-5 pb-3 px-5">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => {
+                onNewChat();
+                if (window.matchMedia('(max-width: 767px)').matches) onClose();
+              }}
+              className="h-9 px-4 rounded-lg text-sm text-[var(--text-primary)] border border-[var(--border)] bg-transparent hover:bg-[var(--surface)] active:scale-[0.985] transition-all flex items-center gap-2"
+              aria-label={TEXT.newChat}
+              title={TEXT.newChat}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {TEXT.newChat}
+            </button>
             <button
               onClick={onClose}
-              className="md:hidden p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors"
+              className="md:hidden w-9 h-9 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
               aria-label={TEXT.closeSidebar}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -210,26 +224,9 @@ export default function Sidebar({
               </svg>
             </button>
           </div>
-
-          <div className="flex justify-center pt-1">
-            <button
-              onClick={() => {
-                onNewChat();
-                if (window.matchMedia('(max-width: 767px)').matches) onClose();
-              }}
-              className="w-[58px] h-[58px] rounded-2xl text-[var(--text-primary)] border border-[var(--border)] bg-transparent hover:bg-[var(--surface)] active:scale-[0.985] transition-all flex items-center justify-center"
-              aria-label={TEXT.newChat}
-              title={TEXT.newChat}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-          </div>
         </div>
 
-        <div className="px-6 pb-4">
+        <div className="px-5 pb-3">
           <div className="relative mb-2">
             <svg
               width="16"
@@ -248,14 +245,14 @@ export default function Sidebar({
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder={TEXT.searchChat}
-              className="w-full h-[50px] bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-11 pr-4 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] transition-colors"
+              className="w-full h-[44px] bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-10 pr-4 text-sm leading-5 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              className="flex-1 h-10 bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              className="flex-1 h-9 bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
               aria-label={TEXT.sort}
             >
               <option value="favorite">{TEXT.sortFavorite}</option>
@@ -265,30 +262,8 @@ export default function Sidebar({
               <option value="title_desc">{TEXT.sortTitleDesc}</option>
             </select>
             <button
-              onClick={() => jumpToResult(-1)}
-              disabled={matchedIds.length === 0}
-              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-              aria-label={TEXT.searchPrev}
-              title={TEXT.searchPrev}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <button
-              onClick={() => jumpToResult(1)}
-              disabled={matchedIds.length === 0}
-              className="w-10 h-10 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-              aria-label={TEXT.searchNext}
-              title={TEXT.searchNext}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-            <button
               onClick={() => setFavoritesOnly((prev) => !prev)}
-              className={`w-10 h-10 rounded-lg border transition-colors flex items-center justify-center ${
+              className={`w-9 h-9 rounded-lg border transition-colors flex items-center justify-center flex-shrink-0 ${
                 favoritesOnly
                   ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--surface)]'
                   : 'border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)]'
@@ -303,31 +278,40 @@ export default function Sidebar({
             </button>
           </div>
           {lowerQuery && (
-            <div className="pt-2 text-xs text-[var(--text-muted)]">
-              {matchedIds.length === 0 ? TEXT.notFound : `${safeJumpIndex + 1}/${matchedIds.length} ${TEXT.searchResult}`}
+            <div className="pt-2 flex items-center gap-2">
+              <span className="text-xs text-[var(--text-muted)]">
+                {matchedIds.length === 0 ? TEXT.notFound : `${safeJumpIndex + 1}/${matchedIds.length} ${TEXT.searchResult}`}
+              </span>
+              {matchedIds.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => jumpToResult(-1)}
+                    className="w-7 h-7 rounded-md border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
+                    aria-label={TEXT.searchPrev}
+                    title={TEXT.searchPrev}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => jumpToResult(1)}
+                    className="w-7 h-7 rounded-md border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
+                    aria-label={TEXT.searchNext}
+                    title={TEXT.searchNext}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="px-6 pb-3">
-          <button
-            onClick={() => {
-              onNavigate('/album');
-              if (window.matchMedia('(max-width: 767px)').matches) onClose();
-            }}
-            className="w-full py-4 px-4 text-left text-base leading-6 text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface)] transition-colors flex items-center gap-3"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <circle cx="8.5" cy="10" r="1.5" />
-              <polyline points="21,15 16,11 10,17 7,14 3,18" />
-            </svg>
-            {TEXT.album}
-          </button>
-        </div>
-
         <div className="menu-divider mx-5 mb-3" />
-        <div className="px-6 pb-2">
+        <div className="px-5 pb-2">
           <div className="text-xs tracking-wide text-[var(--text-muted)] font-medium">{TEXT.history}</div>
         </div>
 
@@ -361,7 +345,7 @@ export default function Sidebar({
                   onSelect(conv.id);
                   if (window.matchMedia('(max-width: 767px)').matches) onClose();
                 }}
-                className={`group relative flex items-center gap-2 py-4 pl-5 pr-4 rounded-xl cursor-pointer mb-1 transition-colors ${
+                className={`group relative flex items-center gap-2 py-3 pl-4 pr-3 rounded-xl cursor-pointer mb-0.5 transition-colors ${
                   active
                     ? 'bg-[var(--surface)] text-[var(--text-primary)]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]'
@@ -419,20 +403,15 @@ export default function Sidebar({
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[11px] leading-5 text-[var(--text-muted)] font-mono flex-shrink-0">
-                          #{conversationDisplayIds[conv.id] ?? '-----'}
-                        </span>
-                        <div className="text-[16px] leading-6 truncate">{highlightedTitle(conv.title)}</div>
-                      </div>
-                      <div className="text-[14px] leading-5 text-[var(--text-muted)] mt-0.5">
+                      <div className="text-[15px] leading-6 truncate">{highlightedTitle(conv.title)}</div>
+                      <div className="text-[13px] leading-5 text-[var(--text-muted)] mt-1">
                         {formatRelativeTime(conv.updated_at)}
                       </div>
                     </>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -440,7 +419,7 @@ export default function Sidebar({
                       onPin(conv.id, next);
                       onNotify?.(next ? TEXT.addedFavorite : TEXT.removedFavorite, 'success');
                     }}
-                    className={`w-7 h-7 rounded-md transition-colors flex items-center justify-center ${
+                    className={`w-8 h-8 rounded-md transition-colors flex items-center justify-center ${
                       conv.pinned
                         ? 'text-[var(--accent)] hover:bg-[var(--surface)]'
                         : 'text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--surface)]'
@@ -467,7 +446,7 @@ export default function Sidebar({
                       }
                       startRename(conv);
                     }}
-                    className="w-7 h-7 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
+                    className="w-8 h-8 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
                     title={TEXT.rename}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -480,7 +459,7 @@ export default function Sidebar({
                       e.stopPropagation();
                       setDeleteTarget(conv);
                     }}
-                    className="w-7 h-7 rounded-md text-[var(--text-secondary)] hover:text-[var(--danger)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
+                    className="w-8 h-8 rounded-md text-[var(--text-secondary)] hover:text-[var(--danger)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
                     title={TEXT.delete}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -495,7 +474,7 @@ export default function Sidebar({
         </div>
 
         <div className="menu-divider mx-5 mt-2" />
-        <div className="px-6 pt-3 pb-6">
+        <div className="px-5 pt-4 pb-8">
           <button
             onClick={() => {
               onNavigate('/settings');
@@ -510,24 +489,6 @@ export default function Sidebar({
             {TEXT.settings}
           </button>
 
-          <div className="pt-3">
-            <div className="text-xs tracking-wide text-[var(--text-muted)] font-medium pb-2">{TEXT.theme}</div>
-            <div className="grid grid-cols-3 gap-2">
-              {themeItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => onThemeChange(item.id)}
-                  className={`min-h-[56px] px-2 rounded-xl text-[13px] font-medium border transition-colors ${
-                    theme === item.id
-                      ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--surface-soft)]'
-                      : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface)]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </aside>
 

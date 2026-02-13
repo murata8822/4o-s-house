@@ -378,7 +378,7 @@ export default function ChatArea({
 
   return (
     <div className="relative flex-1 flex flex-col min-w-0 bg-[var(--bg)] text-[var(--text-primary)]">
-      <header className="flex items-center gap-3 px-8 md:px-10 py-4 border-b border-[var(--border)]">
+      <header className="flex items-center gap-3 px-4 md:px-6 py-3 border-b border-[var(--border)]">
         <button
           onClick={onToggleSidebar}
           className="text-[var(--text-primary)] p-2.5 rounded-lg active:scale-95 transition-transform hover:bg-[var(--surface)]"
@@ -393,7 +393,7 @@ export default function ChatArea({
 
         <button
           onClick={() => setShowModelPicker((prev) => !prev)}
-          className="glass-pill text-white min-w-[230px] sm:min-w-[280px] max-w-[68vw] sm:max-w-none px-5 py-2 rounded-full text-[18px] font-semibold leading-6 hover:brightness-105 active:scale-95 transition-all text-left truncate"
+          className="glass-pill text-white max-w-[68vw] sm:max-w-none px-5 py-2 rounded-full text-[15px] font-semibold leading-5 hover:brightness-105 active:scale-95 transition-all text-left truncate"
         >
           {modelLabel}
         </button>
@@ -457,7 +457,7 @@ export default function ChatArea({
       )}
 
       <div
-        className="flex-1 overflow-y-auto px-8 md:px-10 pt-7"
+        className="flex-1 overflow-y-auto px-4 md:px-6 pt-5"
         style={{ paddingBottom: `${Math.max(inputOverlayHeight + 24, 160)}px` }}
       >
         {!hasMessages && (
@@ -470,7 +470,7 @@ export default function ChatArea({
           </div>
         )}
 
-        <div className="max-w-5xl mx-auto space-y-7">
+        <div className="max-w-3xl mx-auto space-y-5">
           {messages.map((msg) => (
             <MessageBubble
               key={msg.id}
@@ -507,20 +507,20 @@ export default function ChatArea({
 
       <div
         ref={inputAreaRef}
-        className="input-area absolute inset-x-0 bottom-0 px-8 md:px-10 pb-4 pt-4 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/95 to-transparent pointer-events-none"
+        className="input-area absolute inset-x-0 bottom-0 px-4 md:px-6 pb-4 pt-3 bg-gradient-to-t from-[var(--bg)] from-80% via-[var(--bg)]/90 to-transparent pointer-events-none"
       >
-        <div className="max-w-5xl mx-auto pointer-events-auto">
-          <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="max-w-3xl mx-auto pointer-events-auto">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <button
               onClick={handleCheerPrompt}
-              className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center gap-2"
+              className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center gap-1.5 text-xs"
               title={TEXT.cheerPrompt}
               aria-label={TEXT.cheerPrompt}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 3l2.6 5.3L20 9l-4 3.8.9 5.2L12 15.8 7.1 18l.9-5.2L4 9l5.4-.7L12 3z" />
               </svg>
-              <span className="text-sm leading-5">{TEXT.cheerPrompt}</span>
+              <span>{TEXT.cheerPrompt}</span>
             </button>
             <div className="flex items-center gap-1.5">
               {editingTarget && (
@@ -530,38 +530,17 @@ export default function ChatArea({
                     setInputText('');
                     setImagePreview(null);
                   }}
-                  className="h-9 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center gap-2"
+                  className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center gap-1.5 text-xs"
                   title={TEXT.cancelEdit}
                   aria-label={TEXT.cancelEdit}
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
-                  <span className="text-sm leading-5">{TEXT.cancelEdit}</span>
+                  <span>{TEXT.cancelEdit}</span>
                 </button>
               )}
-              <button
-                onClick={decreaseComposer}
-                className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
-                title={TEXT.composerSmaller}
-                aria-label={TEXT.composerSmaller}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-              <button
-                onClick={increaseComposer}
-                className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
-                title={TEXT.composerLarger}
-                aria-label={TEXT.composerLarger}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
             </div>
           </div>
           {imagePreview && (
@@ -646,7 +625,7 @@ export default function ChatArea({
               placeholder={TEXT.inputPlaceholder}
               rows={1}
               style={{ height: `${composerHeight}px` }}
-              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl pt-4 pb-14 pl-14 pr-32 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] resize-none transition-colors"
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl pt-3 pb-12 pl-12 pr-28 text-base leading-6 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] resize-none transition-colors"
             />
 
             <div className="absolute left-2.5 bottom-2.5">

@@ -34,12 +34,12 @@ export default function MessageBubble({
   const hasImage = Boolean(imageData);
 
   return (
-    <div className={`animate-fadeIn ${isUser ? 'flex justify-end' : ''}`}>
-      <div className={isUser ? 'w-full max-w-[min(86%,820px)]' : 'w-full'}>
-        <div className={`flex items-center gap-2 mb-2 ${isUser ? 'justify-end' : ''}`}>
-          {!isUser && <span className="text-base leading-6 font-medium text-[var(--accent)]">4o</span>}
+    <div className={`group/msg animate-fadeIn ${isUser ? 'flex justify-end' : ''}`}>
+      <div className={isUser ? 'w-full max-w-[min(86%,720px)]' : 'w-full'}>
+        <div className={`flex items-center gap-3 mb-1.5 ${isUser ? 'justify-end' : ''}`}>
+          {!isUser && <span className="text-sm leading-5 font-medium text-[var(--accent)]">4o</span>}
           {showTimestamp && (
-            <span className="text-sm leading-5 text-[var(--text-muted)]">
+            <span className="text-xs leading-4 text-[var(--text-muted)]">
               {new Date(message.created_at).toLocaleTimeString('ja-JP', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -47,7 +47,7 @@ export default function MessageBubble({
             </span>
           )}
           {!isUser && showModel && message.model && (
-            <span className="text-xs text-[var(--text-muted)] bg-[var(--surface)] px-2 py-1 rounded-full">
+            <span className="text-[11px] text-[var(--text-muted)] bg-[var(--surface)] px-2 py-0.5 rounded-full">
               {message.model}
             </span>
           )}
@@ -60,35 +60,35 @@ export default function MessageBubble({
         )}
 
         {isUser ? (
-          <div className="ml-auto rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-5 py-4 text-base leading-5 whitespace-pre-wrap break-words text-[var(--text-primary)]">
+          <div className="ml-auto rounded-2xl bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-4 py-3 text-[15px] leading-6 whitespace-pre-wrap break-words text-[var(--text-primary)]">
             {message.content_text}
           </div>
         ) : (
-          <div className="mr-auto rounded-2xl bg-[var(--surface-soft)] border border-[var(--border)] px-5 py-4 text-base leading-5 whitespace-pre-wrap break-words text-[var(--text-primary)] max-w-[min(86%,820px)]">
+          <div className="mr-auto rounded-2xl px-4 py-3 text-[15px] leading-6 whitespace-pre-wrap break-words text-[var(--text-primary)] max-w-[min(90%,720px)]">
             {message.content_text}
           </div>
         )}
 
         {isUser && (
-          <div className="mt-2 flex items-center justify-end gap-2">
+          <div className="mt-1 flex items-center justify-end gap-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity">
             <button
               onClick={() => onCopyUserMessage?.(message)}
-              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+              className="w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
               title={TEXT.copy}
               aria-label={TEXT.copy}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
             </button>
             <button
               onClick={() => onEditUserMessage?.(message)}
-              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+              className="w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
               title={TEXT.editAndRegenerate}
               aria-label={TEXT.editAndRegenerate}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 20h9" />
                 <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
               </svg>
@@ -97,14 +97,14 @@ export default function MessageBubble({
         )}
 
         {!isUser && (
-          <div className="mt-2 flex items-center justify-start gap-2">
+          <div className="mt-1 flex items-center justify-start gap-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity">
             <button
               onClick={() => onCopyAssistantMessage?.(message)}
-              className="w-9 h-9 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-soft)] transition-colors flex items-center justify-center"
+              className="w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors flex items-center justify-center"
               title={TEXT.copy}
               aria-label={TEXT.copy}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
