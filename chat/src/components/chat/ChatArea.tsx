@@ -18,7 +18,7 @@ interface ChatAreaProps {
   streamingText: string;
   currentModel: ModelId;
   timestampsEnabled: boolean;
-  onSend: (text: string, imageData?: string) => void;
+  onSend: (text: string, imageData?: string) => void | Promise<void>;
   onStop: () => void;
   onModelChange: (model: ModelId) => void;
   onToggleSidebar: () => void;
@@ -53,6 +53,7 @@ const TEXT = {
   copied: '\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f',
   copyFailed: '\u30b3\u30d4\u30fc\u306b\u5931\u6557\u3057\u307e\u3057\u305f',
   conversationCopied: '\u4f1a\u8a71\u3092\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f',
+  imageAttached: '\u753b\u50cf\u3092\u6dfb\u4ed8\u3057\u307e\u3057\u305f',
 };
 
 const COMPOSER_MIN_HEIGHT = 84;
@@ -96,6 +97,8 @@ export default function ChatArea({
   const [lastCheerIndex, setLastCheerIndex] = useState<number | null>(null);
   const [inputOverlayHeight, setInputOverlayHeight] = useState(192);
   const [editingTarget, setEditingTarget] = useState<Message | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -160,22 +163,43 @@ export default function ChatArea({
     }
   }, [messages, editingTarget]);
 
+  const readImageFile = (file: File) => {
+    if (file.size > 20 * 1024 * 1024) {
+      alert(TEXT.imageTooLarge);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+      onNotify?.(TEXT.imageAttached, 'info');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSend = async () => {
     const text = inputText.trim();
     if (!text && !imagePreview) return;
     if (isStreaming) return;
+    if (isSubmitting) return;
 
-    if (editingTarget && onEditAndRegenerate) {
-      await onEditAndRegenerate(editingTarget, text, imagePreview || undefined);
-      setEditingTarget(null);
-      setInputText('');
-      setImagePreview(null);
-      return;
-    }
+    setIsSubmitting(true);
 
-    onSend(text, imagePreview || undefined);
+    const sendingText = text;
+    const sendingImage = imagePreview || undefined;
     setInputText('');
     setImagePreview(null);
+
+    try {
+      if (editingTarget && onEditAndRegenerate) {
+        await onEditAndRegenerate(editingTarget, sendingText, sendingImage);
+        setEditingTarget(null);
+        return;
+      }
+
+      await onSend(sendingText, sendingImage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -196,14 +220,37 @@ export default function ChatArea({
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      alert(TEXT.imageTooLarge);
-      return;
-    }
+    readImageFile(file);
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = Array.from(e.clipboardData?.items || []);
+    const imageItem = items.find((item) => item.type.startsWith('image/'));
+    if (!imageItem) return;
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    e.preventDefault();
+    readImageFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    const hasFile = Array.from(e.dataTransfer?.types || []).includes('Files');
+    if (!hasFile) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = Array.from(e.dataTransfer?.files || []).find((f) => f.type.startsWith('image/'));
+    setIsDragOver(false);
+    if (!file) return;
+    readImageFile(file);
   };
 
   const handleCopyUserMessage = async (msg: Message) => {
@@ -551,7 +598,12 @@ export default function ChatArea({
             </div>
           )}
 
-          <div className="relative">
+          <div
+            className={`relative ${isDragOver ? 'ring-2 ring-[var(--accent)] rounded-2xl' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             {cheerNotice && (
               <div className="absolute right-2 bottom-[calc(100%+8px)] z-30 px-3 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--text-secondary)] shadow-md animate-fadeIn">
                 {TEXT.cheerPromptInserted}
@@ -589,6 +641,7 @@ export default function ChatArea({
               ref={textareaRef}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onPaste={handlePaste}
               onKeyDown={handleKeyDown}
               placeholder={TEXT.inputPlaceholder}
               rows={1}
@@ -651,7 +704,7 @@ export default function ChatArea({
 
               <button
                 onClick={handleSend}
-                disabled={(!inputText.trim() && !imagePreview) || isStreaming}
+                disabled={(!inputText.trim() && !imagePreview) || isStreaming || isSubmitting}
                 className="w-10 h-10 glass-icon-btn rounded-lg flex items-center justify-center text-white disabled:opacity-30 disabled:grayscale hover:brightness-105 active:scale-90 transition-all"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

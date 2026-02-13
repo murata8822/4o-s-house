@@ -48,7 +48,7 @@ export const MODELS: ModelOption[] = [
   {
     id: 'chatgpt-4o-latest',
     label: 'ChatGPT-4o-latest',
-    description: 'ChatGPT寄せ比較用',
+    description: 'ChatGPT系の最新モデル',
     inputCostPer1M: 5.0,
     outputCostPer1M: 15.0,
   },
@@ -76,6 +76,16 @@ export interface Message {
   token_input: number | null;
   token_output: number | null;
   cost_usd: number | null;
+}
+
+export interface AlbumItem {
+  id: number;
+  user_id: string;
+  image_data: string;
+  comment: string;
+  memory_note: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MemoryNote {
